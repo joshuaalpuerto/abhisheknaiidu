@@ -1,0 +1,4756 @@
+---
+swagger: "2.0"
+info:
+  description: EasyPass API reference
+  version: 0.9.1
+  title: EasyPass API
+  contact:
+    email: joshuacalpuerto@gmail.com
+host: sandbox.easyqueue.ph
+basePath: /api
+tags:
+- name: User
+  description: API calls for users
+- name: Service Locations
+  description: API calls for service locations
+- name: New
+  description: Versioned APIs
+- name: SMS
+  description: API calls for SMS related actions
+- name: General
+  description: API calls for service locations
+schemes:
+- https
+- http
+consumes:
+- application/json
+produces:
+- application/json
+paths:
+  /agencies:
+    get:
+      tags:
+      - User
+      description: Get the list of agencies. Ref:https://trello.com/c/YLcLyy60/6-home-page
+      operationId: retrieveAllAgencies
+      parameters:
+      - name: page_number
+        in: query
+        description: Page number
+        required: false
+        type: number
+        default: 0.0
+      - name: page_size
+        in: query
+        description: Number of items per page
+        required: false
+        type: number
+        default: 10.0
+      responses:
+        "200":
+          description: Success
+          schema:
+            $ref: '#/definitions/AgencyPage'
+        default:
+          description: Error
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      x-swagger-router-controller: Agencies
+  /agencies/agency-list:
+    get:
+      tags:
+      - Service Locations
+      operationId: AgencyList
+      parameters: []
+      responses:
+        "200":
+          description: Success
+          schema:
+            type: object
+            properties:
+              data:
+                type: array
+                description: List of agencies
+                items:
+                  $ref: '#/definitions/AgencyListDetailsView'
+        default:
+          description: Error
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      x-swagger-router-controller: Agencies
+  /appointments:
+    get:
+      tags:
+      - User
+      - Service Locations
+      description: "Get the list of appointments booked by the applicant. Appointments with schedule near the current date must come first. When accessed by Provider: Ref:https://trello.com/c/rM6H68zw/16-servicelocation-home. When accessed by Consumer: Ref:https://trello.com/c/YLcLyy60/6-home-page"
+      operationId: retrieveAllAppointments
+      parameters:
+      - name: start_date
+        in: query
+        description: Appointment Start Date
+        required: false
+        type: string
+        default: 03/01/2021
+      - name: end_date
+        in: query
+        description: Appointment End Date
+        required: false
+        type: string
+        default: 03/31/2021
+      - name: timeSlotId
+        in: query
+        description: Time Slot Id
+        required: false
+        type: string
+        default: "123"
+      - name: serviceId
+        in: query
+        description: Service Id
+        required: false
+        type: string
+        default: "456"
+      - name: status
+        in: query
+        description: Appointment Status
+        required: false
+        type: string
+        default: PENDING
+        enum:
+        - PENDING
+        - CANCELLED
+        - COMPLETED
+      - name: cursor_id
+        in: query
+        description: Starting Id to be search
+        required: false
+        type: number
+        default: 0.0
+      - name: page_size
+        in: query
+        description: Number of items per page
+        required: false
+        type: number
+        default: 10.0
+      responses:
+        "200":
+          description: Success
+          schema:
+            $ref: '#/definitions/AppointmentPage'
+        default:
+          description: Error
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      x-swagger-router-controller: Appointments
+    post:
+      tags:
+      - User
+      description: Save appointment details. Note that all field forms are required aside from order refernce since we have Cash on Location payment mode.
+      operationId: saveApppointment
+      parameters:
+      - in: body
+        name: AppointmentPayload
+        description: PaymentForm
+        required: true
+        schema:
+          $ref: '#/definitions/AppointmentPayload'
+      responses:
+        "200":
+          description: Success
+          schema:
+            type: object
+            properties:
+              data:
+                $ref: '#/definitions/AppointmentResponse'
+              message:
+                type: string
+              success:
+                type: boolean
+                default: true
+        default:
+          description: Error
+          schema:
+            $ref: '#/definitions/ErrorResponseForm'
+      x-swagger-router-controller: Appointments
+  /appointments/{appointmentId}:
+    get:
+      tags:
+      - User
+      - Service Locations
+      description: Get specific schedule
+      operationId: Schedule
+      parameters:
+      - name: appointmentId
+        in: path
+        description: Appintment Id
+        required: true
+        type: string
+        default: "12345"
+      responses:
+        "200":
+          description: Success
+          schema:
+            type: object
+            properties:
+              data:
+                $ref: '#/definitions/AppointmentResponse'
+              message:
+                type: string
+              success:
+                type: boolean
+                default: true
+        default:
+          description: Error
+          schema:
+            $ref: '#/definitions/ErrorResponseForm'
+      x-swagger-router-controller: Schedule
+  /appointments/{appointmentId}/cancel:
+    post:
+      tags:
+      - User
+      description: Allow cancellation if still in the time frame.
+      operationId: CancelSchedule
+      parameters:
+      - name: appointmentId
+        in: path
+        description: Appointment Id
+        required: true
+        type: string
+        default: "12345"
+      - in: body
+        name: appointmentCancellationForm
+        required: true
+        schema:
+          $ref: '#/definitions/AppointmentCancellationForm'
+      responses:
+        "200":
+          description: Success
+          schema:
+            $ref: '#/definitions/AppointmentCancellationResponse'
+        default:
+          description: Error
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      x-swagger-router-controller: CancelSchedule
+  /appointments/{appointmentId}/merchant-cancel:
+    get:
+      tags:
+      - Service Locations
+      description: Get specific schedule for merchant cancellation.
+      operationId: GetMerchantCancelSchedule
+      parameters:
+      - name: appointmentId
+        in: path
+        description: Appintment Id
+        required: true
+        type: integer
+        default: 12345
+      responses:
+        "200":
+          description: Success
+          schema:
+            type: object
+            properties:
+              data:
+                $ref: '#/definitions/MerchantCancelRemarksResponse'
+              message:
+                type: string
+              success:
+                type: boolean
+                default: true
+        default:
+          description: Error
+          schema:
+            $ref: '#/definitions/ErrorResponseForm'
+      x-swagger-router-controller: Schedule
+    put:
+      tags:
+      - Service Locations
+      description: Allow merchant to cancel appointment if still in the time frame.
+      operationId: MerchantCancelSchedule
+      parameters:
+      - name: appointmentId
+        in: path
+        description: Appointment Id
+        required: true
+        type: string
+        default: "12345"
+      - in: body
+        name: MerchantCancelRemarksPayload
+        required: true
+        schema:
+          $ref: '#/definitions/MerchantCancelRemarksPayload'
+      responses:
+        "200":
+          description: Success
+          schema:
+            type: object
+            properties:
+              data:
+                $ref: '#/definitions/MerchantCancelRemarksResponse'
+              message:
+                type: string
+              success:
+                type: boolean
+                default: true
+        default:
+          description: Error
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      x-swagger-router-controller: CancelSchedule
+  /appointments/cancel-all:
+    post:
+      tags:
+      - Service Locations
+      description: Allow cancellation if still in the time frame.
+      operationId: CancelAllSchedule
+      parameters:
+      - in: body
+        name: appointmentCancellationForm
+        required: true
+        schema:
+          $ref: '#/definitions/AppointmentCancellAllPayload'
+      responses:
+        "200":
+          description: Success
+          schema:
+            $ref: '#/definitions/AppointmentCancellAllResponse'
+        default:
+          description: Error
+          schema:
+            $ref: '#/definitions/ErrorResponseForm'
+      x-swagger-router-controller: CancelSchedule
+  /appointments/{appointmentId}/verify:
+    post:
+      tags:
+      - User
+      description: Verify appointment.
+      operationId: VerifySchedule
+      parameters:
+      - name: appointmentId
+        in: path
+        description: Appointment Id
+        required: true
+        type: string
+        default: "12345"
+      responses:
+        "200":
+          description: Success
+          schema:
+            $ref: '#/definitions/OTPResponse'
+        default:
+          description: Error
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      x-swagger-router-controller: VerifySchedule
+  /billing-info:
+    get:
+      tags:
+      - Service Locations
+      description: Get Merchant's Billing Information.
+      operationId: GetBillingInfo
+      parameters: []
+      responses:
+        "200":
+          description: Success
+          schema:
+            $ref: '#/definitions/BillingInfoResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/ErrorResponseForm'
+      x-swagger-router-controller: BusinessSizeController
+    post:
+      tags:
+      - Service Locations
+      description: Create/Update Billing Information for Merchant that will be used for availing Subscrtipions.
+      operationId: SaveBillingInfo
+      parameters:
+      - in: body
+        name: BillingInfoPayload
+        description: Payload of data for saving Merchant's Billing Information.
+        required: true
+        schema:
+          $ref: '#/definitions/BillingInfoPayload'
+      responses:
+        "200":
+          description: Success
+          schema:
+            $ref: '#/definitions/SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/ErrorResponseForm'
+        default:
+          description: One or more validation errors occurred.
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      x-swagger-router-controller: BillingInformation
+  /business-size/list:
+    get:
+      tags:
+      - Service Locations
+      description: List of Business Size
+      operationId: GetList
+      parameters: []
+      responses:
+        "200":
+          description: Success
+          schema:
+            type: object
+            properties:
+              data:
+                type: array
+                items:
+                  $ref: '#/definitions/BusinessSizeResponse'
+              success:
+                type: boolean
+                default: true
+              message:
+                type: string
+        default:
+          description: Error
+          schema:
+            $ref: '#/definitions/ErrorResponseForm'
+      x-swagger-router-controller: BusinessSizeController
+  /categories:
+    get:
+      tags:
+      - User
+      - New
+      description: Get the list of categories and their subcategories.
+      operationId: CategoryList
+      parameters: []
+      responses:
+        "200":
+          description: Success
+          schema:
+            type: object
+            properties:
+              data:
+                type: array
+                items:
+                  $ref: '#/definitions/CategoryResponse'
+              success:
+                type: boolean
+                default: true
+              message:
+                type: string
+        default:
+          description: Error
+          schema:
+            $ref: '#/definitions/ErrorResponseForm'
+      x-swagger-router-controller: VerifySchedule
+  /feedback:
+    post:
+      tags:
+      - User
+      description: Submit feedback from user.
+      operationId: saveFeedback
+      parameters:
+      - in: body
+        name: FeedbackForm
+        description: Information to be registered
+        required: true
+        schema:
+          $ref: '#/definitions/FeedbackForm'
+      responses:
+        "200":
+          description: Success
+          schema:
+            $ref: '#/definitions/Success'
+        default:
+          description: Error
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      x-swagger-router-controller: ServiceLocationRating
+  /identification/list:
+    get:
+      tags:
+      - General
+      description: Fetch all Identification type
+      operationId: IdentificationList
+      produces:
+      - application/json
+      parameters: []
+      responses:
+        "200":
+          description: Success
+          schema:
+            type: object
+            properties:
+              data:
+                type: array
+                description: List of industries
+                items:
+                  $ref: '#/definitions/IdentificationDetails'
+              message:
+                type: string
+              success:
+                type: boolean
+                default: true
+        default:
+          description: Error
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      x-swagger-router-controller: GetIndustryTypes
+  /industry-type:
+    get:
+      tags:
+      - Service Locations
+      description: Fetch all Industry type
+      operationId: GetIndustryTypes
+      produces:
+      - application/json
+      parameters: []
+      responses:
+        "200":
+          description: Success
+          schema:
+            type: object
+            properties:
+              data:
+                type: array
+                description: List of industries
+                items:
+                  $ref: '#/definitions/IndustryTypeResponse'
+        default:
+          description: Error
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      x-swagger-router-controller: GetIndustryTypes
+  /login:
+    post:
+      tags:
+      - User
+      - Service Locations
+      description: User login. JWT Access token contains 'authorities' and 'id' claims. The 'authorities' claim will be used to determine the roles and prvileges assigned to the logged-in user while 'id' is just the user id of the logged-in user.
+      operationId: Login
+      parameters:
+      - in: body
+        name: login
+        description: Login information
+        required: true
+        schema:
+          $ref: '#/definitions/LoginForm'
+      responses:
+        "200":
+          description: Success. access
+          schema:
+            $ref: '#/definitions/VerificationResponse'
+        default:
+          description: Error
+          schema:
+            $ref: '#/definitions/LoginErrorResponse'
+      x-swagger-router-controller: User
+  /lock-date:
+    get:
+      tags:
+      - Service Locations
+      description: Get specific schedule
+      operationId: GetLockDates
+      parameters:
+      - name: start_date
+        in: query
+        description: Get all lockdate from the specified starting date.
+        required: false
+        type: string
+        default: 01-01-2000
+      responses:
+        "200":
+          description: Success
+          schema:
+            type: object
+            properties:
+              data:
+                type: array
+                description: List of Lockdates order by Start Date
+                items:
+                  $ref: '#/definitions/LockDateResponse'
+              message:
+                type: string
+              success:
+                type: boolean
+                default: true
+        default:
+          description: Error
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      x-swagger-router-controller: LockDate
+    post:
+      tags:
+      - Service Locations
+      description: Add lock dates
+      operationId: CreateLockDate
+      parameters:
+      - in: body
+        name: LockDatePayload
+        description: Save lockdates
+        required: true
+        schema:
+          $ref: '#/definitions/LockDatePayload'
+      responses:
+        "200":
+          description: Success
+          schema:
+            type: object
+            properties:
+              data:
+                $ref: '#/definitions/LockDateResponse'
+              message:
+                type: string
+              success:
+                type: boolean
+                default: true
+        default:
+          description: Error
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      x-swagger-router-controller: LockDate
+  /lock-date/{lock_date}:
+    get:
+      tags:
+      - Service Locations
+      description: Get specific schedule
+      operationId: GetLockDateByDate
+      parameters:
+      - name: lock_date
+        in: path
+        description: Get lock date by date
+        required: true
+        type: string
+        default: 01/01/2000
+      responses:
+        "200":
+          description: Success
+          schema:
+            type: object
+            properties:
+              data:
+                $ref: '#/definitions/LockDateResponse'
+              message:
+                type: string
+              success:
+                type: boolean
+                default: true
+        default:
+          description: Error
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      x-swagger-router-controller: LockDate
+  /lock-date/list:
+    get:
+      tags:
+      - Service Locations
+      description: Get lockdates per dates
+      operationId: GetLockDateList
+      parameters: []
+      responses:
+        "200":
+          description: Success
+          schema:
+            type: object
+            properties:
+              data:
+                $ref: '#/definitions/LockDateListResponse'
+              message:
+                type: string
+              success:
+                type: boolean
+                default: true
+        default:
+          description: Error
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      x-swagger-router-controller: LockDate
+  /lock-date/remove:
+    post:
+      tags:
+      - Service Locations
+      description: Remove lock date
+      operationId: RemoveLockDate
+      consumes:
+      - multipart/form-data
+      produces:
+      - application/json
+      parameters:
+      - in: body
+        name: RemoveLockDateRequestForm
+        description: Remove lock date
+        required: true
+        schema:
+          $ref: '#/definitions/RemoveLockDateRequestForm'
+      responses:
+        "200":
+          description: Success
+          schema:
+            type: object
+            properties:
+              data:
+                $ref: '#/definitions/RemoveLockDateResponse'
+              message:
+                type: string
+              success:
+                type: boolean
+                default: true
+        default:
+          description: Error
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      x-swagger-router-controller: LockDate
+  /merchants:
+    get:
+      tags:
+      - User
+      - New
+      description: "Get list of merchant based on the filtered criteria. Ref: https://trello.com/c/HHRFc9eb/7-booking-list"
+      operationId: MerchantList
+      parameters:
+      - name: date
+        in: query
+        description: Date input by the user.
+        required: false
+        type: string
+        default: 2021-07-06
+      - name: category_id
+        in: query
+        description: Unique identifier of category.
+        required: false
+        type: integer
+        default: 1
+      - name: addr_lat
+        in: query
+        description: Latitude
+        required: false
+        type: number
+        default: 14.6033
+      - name: addr_lng
+        in: query
+        description: Longitude
+        required: false
+        type: number
+        default: 121.023
+      - name: cursor_id
+        in: query
+        description: Page number
+        required: false
+        type: integer
+        default: 0
+      - name: page_number
+        in: query
+        description: Page number
+        required: false
+        type: integer
+        default: 0
+      - name: page_size
+        in: query
+        description: Number of records to be fetched per page
+        required: false
+        type: integer
+        default: 10
+      responses:
+        "200":
+          description: Success
+          schema:
+            $ref: '#/definitions/MerchantListDashboardResponse'
+        default:
+          description: Error
+          schema:
+            $ref: '#/definitions/ErrorResponseForm'
+      x-swagger-router-controller: Merchant
+  /merchants/{merchantId}:
+    get:
+      tags:
+      - User
+      - New
+      description: "Get list of merchant based on the filtered criteria. Ref: https://trello.com/c/HHRFc9eb/7-booking-list"
+      operationId: MerchantDetails
+      parameters:
+      - name: merchantId
+        in: path
+        description: Unique identifier of merchant.
+        required: true
+        type: integer
+        default: 1
+      responses:
+        "200":
+          description: Success
+          schema:
+            type: object
+            properties:
+              data:
+                $ref: '#/definitions/MerchantResponse'
+              message:
+                type: string
+              success:
+                type: boolean
+                default: true
+        default:
+          description: Error
+          schema:
+            $ref: '#/definitions/ErrorResponseForm'
+      x-swagger-router-controller: Merchant
+  /merchants/{merchantId}/ratings:
+    get:
+      tags:
+      - User
+      - New
+      description: "Get list of merchant ratings. Ref: https://trello.com/c/HHRFc9eb/7-booking-list"
+      operationId: MerchantRatings
+      parameters:
+      - name: merchantId
+        in: path
+        description: Unique identifier of merchant.
+        required: true
+        type: integer
+        default: 1
+      responses:
+        "200":
+          description: Success
+          schema:
+            type: object
+            properties:
+              data:
+                type: array
+                items:
+                  $ref: '#/definitions/MerchantRatingResponse'
+              message:
+                type: string
+              success:
+                type: boolean
+                default: true
+        default:
+          description: Error
+          schema:
+            $ref: '#/definitions/ErrorResponseForm'
+      x-swagger-router-controller: Merchant
+  /merchants/{merchantId}/business-hours:
+    get:
+      tags:
+      - User
+      - New
+      description: "Get merchant's hours of operation from each day of the week. Ref: https://trello.com/c/HHRFc9eb/7-booking-list"
+      operationId: MerchantBusinessHours
+      parameters:
+      - name: merchantId
+        in: path
+        description: Unique identifier of merchant.
+        required: true
+        type: integer
+        default: 1
+      responses:
+        "200":
+          description: Success
+          schema:
+            type: object
+            properties:
+              data:
+                type: array
+                items:
+                  $ref: '#/definitions/BusinessHoursResponse'
+              message:
+                type: string
+              success:
+                type: boolean
+                default: true
+        default:
+          description: Error
+          schema:
+            $ref: '#/definitions/ErrorResponseForm'
+      x-swagger-router-controller: Merchant
+  /merchants/business-name:
+    get:
+      tags:
+      - Service Locations
+      - New
+      description: "Get Merchant's Business Name and Logo. Ref: https://trello.com/c/HHRFc9eb/7-booking-list"
+      operationId: GetMerchantBusinessName
+      parameters: []
+      responses:
+        "200":
+          description: Success
+          schema:
+            type: object
+            properties:
+              data:
+                $ref: '#/definitions/MerchantBusinessNameResponse'
+              message:
+                type: string
+              success:
+                type: boolean
+                default: true
+        default:
+          description: Error
+          schema:
+            $ref: '#/definitions/ErrorResponseForm'
+      x-swagger-router-controller: Merchant
+  /merchants/logo:
+    get:
+      tags:
+      - Service Locations
+      - New
+      description: "Get Merchant's Logo. Ref: https://trello.com/c/HHRFc9eb/7-booking-list"
+      operationId: GetMerchantLogo
+      parameters: []
+      responses:
+        "200":
+          description: Success
+          schema:
+            type: object
+            properties:
+              data:
+                $ref: '#/definitions/MerchantLogoResponse'
+              message:
+                type: string
+              success:
+                type: boolean
+                default: true
+        default:
+          description: Error
+          schema:
+            $ref: '#/definitions/ErrorResponseForm'
+      x-swagger-router-controller: Merchant
+    post:
+      tags:
+      - Service Locations
+      - New
+      description: "Save Merchants profile. Ref: https://trello.com/c/HHRFc9eb/7-booking-list"
+      operationId: SaveMerchantLogo
+      parameters:
+      - in: body
+        name: MerchantLogoPayload
+        required: true
+        schema:
+          $ref: '#/definitions/MerchantLogoPayload'
+      responses:
+        "200":
+          description: Success
+          schema:
+            type: object
+            properties:
+              data:
+                $ref: '#/definitions/MerchantLogoResponse'
+              message:
+                type: string
+              success:
+                type: boolean
+                default: true
+        default:
+          description: Error
+          schema:
+            $ref: '#/definitions/ErrorResponseForm'
+      x-swagger-router-controller: Merchant
+  /merchants/profile:
+    get:
+      tags:
+      - Service Locations
+      - New
+      description: "Get Merchant Profile. Ref: https://trello.com/c/HHRFc9eb/7-booking-list"
+      operationId: GetMerchantProfile
+      parameters: []
+      responses:
+        "200":
+          description: Success
+          schema:
+            type: object
+            properties:
+              data:
+                $ref: '#/definitions/MerchantProfileResponse'
+              message:
+                type: string
+              success:
+                type: boolean
+                default: true
+        default:
+          description: Error
+          schema:
+            $ref: '#/definitions/ErrorResponseForm'
+      x-swagger-router-controller: Merchant
+    post:
+      tags:
+      - Service Locations
+      - New
+      description: "Save Merchants profile. Ref: https://trello.com/c/HHRFc9eb/7-booking-list"
+      operationId: SaveMerchantProfile
+      consumes:
+      - multipart/form-data
+      produces:
+      - application/json
+      parameters:
+      - in: body
+        name: MerchantProfilePayload
+        required: true
+        schema:
+          $ref: '#/definitions/MerchantProfilePayload'
+      responses:
+        "200":
+          description: Success
+          schema:
+            type: object
+            properties:
+              data:
+                $ref: '#/definitions/MerchantProfileResponse'
+              message:
+                type: string
+              success:
+                type: boolean
+                default: true
+        default:
+          description: Error
+          schema:
+            $ref: '#/definitions/ErrorResponseForm'
+      x-swagger-router-controller: Merchant
+  /merchants/schedule:
+    get:
+      tags:
+      - Service Locations
+      - New
+      description: "Get Merchant Schedule. Ref: https://trello.com/c/HHRFc9eb/7-booking-list"
+      operationId: GetMerchantSChedule
+      parameters: []
+      responses:
+        "200":
+          description: Success
+          schema:
+            type: object
+            properties:
+              data:
+                $ref: '#/definitions/MerchantSchedulePayload'
+              message:
+                type: string
+              success:
+                type: boolean
+                default: true
+        default:
+          description: Error
+          schema:
+            $ref: '#/definitions/ErrorResponseForm'
+      x-swagger-router-controller: Merchant
+    post:
+      tags:
+      - Service Locations
+      - New
+      description: "Save Merchants Schedule. Ref: https://trello.com/c/HHRFc9eb/7-booking-list"
+      operationId: SaveMerchantSchedule
+      parameters:
+      - in: body
+        name: MerchantSchedulePayload
+        required: true
+        schema:
+          $ref: '#/definitions/MerchantSchedulePayload'
+      responses:
+        "200":
+          description: Success
+          schema:
+            type: object
+            properties:
+              data:
+                $ref: '#/definitions/MerchantSchedulePayload'
+              message:
+                type: string
+              success:
+                type: boolean
+                default: true
+        default:
+          description: Error
+          schema:
+            $ref: '#/definitions/ErrorResponseForm'
+      x-swagger-router-controller: Merchant
+  /merchant-billing/list:
+    get:
+      tags:
+      - Service Locations
+      description: Get all list of merchant's billing record.
+      operationId: getBillingList
+      parameters:
+      - name: category
+        in: query
+        description: Status of invoice.
+        required: false
+        type: string
+        default: Settled
+      - name: invoice_from
+        in: query
+        description: Start date range
+        required: false
+        type: string
+        default: 2020-02-01
+      - name: invoice_to
+        in: query
+        description: End date range
+        required: false
+        type: string
+        default: 2020-02-01
+      responses:
+        "200":
+          description: Success
+          schema:
+            type: object
+            properties:
+              data:
+                type: array
+                items:
+                  $ref: '#/definitions/InvoiceListResponse'
+              message:
+                type: string
+              success:
+                type: boolean
+                default: true
+        default:
+          description: Error
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      x-swagger-router-controller: VerifySchedule
+  /merchant-billing/list/{invoice_id}:
+    get:
+      tags:
+      - Service Locations
+      description: Get the invoice details.
+      operationId: getInvoice
+      parameters:
+      - name: invoice_id
+        in: path
+        description: Unique identifier for invoice.
+        required: true
+        type: string
+        default: "00001"
+      responses:
+        "200":
+          description: Success
+          schema:
+            $ref: '#/definitions/InvoiceDetailsResponse'
+        default:
+          description: Error
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      x-swagger-router-controller: VerifySchedule
+  /merchant-order:
+    post:
+      tags:
+      - Service Locations
+      description: Create order details for merchant on buying subscription.
+      operationId: SaveMerchantOrder
+      parameters:
+      - in: body
+        name: OrderRequestForm
+        description: Unique key for order reference of PesoPay
+        required: true
+        schema:
+          $ref: '#/definitions/OrderRequestForm'
+      responses:
+        "200":
+          description: Success
+          schema:
+            $ref: '#/definitions/OrderResponseForm'
+        default:
+          description: Error
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      x-swagger-router-controller: LockDate
+  /merchant-subscription:
+    post:
+      tags:
+      - Service Locations
+      description: Apply for subscription.
+      operationId: saveMerchantSubscription
+      parameters:
+      - in: body
+        name: MerchantSubscriptionPayload
+        description: Information to be registered.
+        required: true
+        schema:
+          $ref: '#/definitions/MerchantSubscriptionPayload'
+      responses:
+        "200":
+          description: Success
+          schema:
+            $ref: '#/definitions/MerchantSubscriptionResponse'
+        default:
+          description: Error
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      x-swagger-router-controller: Strike
+  /merchant-subscription/active:
+    get:
+      tags:
+      - Service Locations
+      description: Get current active subscription.
+      operationId: getActiveSubscriptionPlan
+      parameters: []
+      responses:
+        "200":
+          description: Success
+          schema:
+            $ref: '#/definitions/ActivePlanResponse'
+        default:
+          description: Error
+          schema:
+            $ref: '#/definitions/ErrorResponseForm'
+      x-swagger-router-controller: ServiceDates
+  /merchant-subscription/cancel:
+    post:
+      tags:
+      - Service Locations
+      description: Cancel active subscription.
+      operationId: cancelSubscriptionPlan
+      parameters: []
+      responses:
+        "200":
+          description: Success
+          schema:
+            type: object
+            properties:
+              data:
+                $ref: '#/definitions/CancelSubscriptionResponse'
+              success:
+                type: boolean
+                default: true
+              message:
+                type: string
+        default:
+          description: Error
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      x-swagger-router-controller: SubscriptionPlan
+  /order:
+    post:
+      tags:
+      - User
+      description: Create order details
+      operationId: SaveOrderReference
+      parameters:
+      - in: body
+        name: OrderRequestForm
+        description: Unique key for order reference of PesoPay
+        required: true
+        schema:
+          $ref: '#/definitions/OrderRequestForm'
+      responses:
+        "200":
+          description: Success
+          schema:
+            $ref: '#/definitions/OrderResponseForm'
+        default:
+          description: Error
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      x-swagger-router-controller: LockDate
+  /payment-options:
+    get:
+      tags:
+      - User
+      description: "List of available payment options allowed for the applicant. Ref: https://trello.com/c/J8qc3GmF/9-booking-form"
+      operationId: paymentOptions
+      parameters:
+      - name: service_location_id
+        in: query
+        description: Service Location Id
+        required: true
+        type: integer
+        default: 0
+      responses:
+        "200":
+          description: Success
+          schema:
+            $ref: '#/definitions/PaymentOptionResponse'
+        default:
+          description: Error
+          schema:
+            $ref: '#/definitions/ErrorResponseForm'
+      x-swagger-router-controller: PaymentOptionController
+  /points:
+    get:
+      tags:
+      - User
+      - Service Locations
+      description: Get point logs of the logged-in user
+      operationId: retrievePoints
+      parameters:
+      - name: userId
+        in: query
+        description: Id of the logged in user
+        required: true
+        type: string
+        default: "12345"
+      - name: page_number
+        in: query
+        description: Page number
+        required: false
+        type: number
+        default: 0.0
+      - name: page_size
+        in: query
+        description: Number of items per page
+        required: false
+        type: number
+        default: 10.0
+      responses:
+        "200":
+          description: Success
+          schema:
+            $ref: '#/definitions/PointsPage'
+        default:
+          description: Error
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      x-swagger-router-controller: Schedule
+    post:
+      tags:
+      - User
+      description: Add point balancce
+      operationId: addPoints
+      parameters:
+      - in: body
+        name: PointsPayload
+        description: Points Form
+        required: true
+        schema:
+          $ref: '#/definitions/PointsPayload'
+      responses:
+        "200":
+          description: Success
+          schema:
+            $ref: '#/definitions/PointsTransactionResponse'
+        default:
+          description: Error
+          schema:
+            $ref: '#/definitions/ErrorResponseForm'
+      x-swagger-router-controller: QPoints
+  /points/history:
+    get:
+      tags:
+      - User
+      description: Show list of QPoints History
+      operationId: getPointsHistory
+      parameters:
+      - name: filter_type
+        in: query
+        description: "Type of QPoints Transaction: All, Purchase or Payment"
+        required: false
+        type: string
+        default: All
+      responses:
+        "200":
+          description: Success
+          schema:
+            type: array
+            description: List of QPoints history transaction.
+            items:
+              $ref: '#/definitions/PointsHistoryResponse'
+        default:
+          description: Error
+          schema:
+            $ref: '#/definitions/ErrorResponseForm'
+      x-swagger-router-controller: Points
+  /points/total:
+    get:
+      tags:
+      - User
+      description: Get point logs of the logged-in user
+      operationId: retrieveTotalPoints
+      parameters: []
+      responses:
+        "200":
+          description: Success
+          schema:
+            $ref: '#/definitions/PointsTotalDetailsView'
+        default:
+          description: Error
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      x-swagger-router-controller: Points
+  /qrcodes:
+    put:
+      tags:
+      - Service Locations
+      description: Update specific schedule
+      operationId: updateQRCodeDetails
+      parameters:
+      - in: body
+        name: AppointmentUpdateForm
+        description: Appointment details for updating
+        required: true
+        schema:
+          $ref: '#/definitions/AppointmentUpdateForm'
+      responses:
+        "200":
+          description: Success
+          schema:
+            $ref: '#/definitions/AppointmentResponse'
+        default:
+          description: Error
+          schema:
+            $ref: '#/definitions/ErrorResponseForm'
+      x-swagger-router-controller: Schedule
+  /qrcodes/{securityCode}:
+    get:
+      tags:
+      - User
+      - Service Locations
+      description: Get specific schedule
+      operationId: retrieveQRCodeDetails
+      parameters:
+      - name: securityCode
+        in: path
+        description: Security Code Encoded in QR Code
+        required: true
+        type: string
+        default: "12345"
+      responses:
+        "200":
+          description: Success
+          schema:
+            $ref: '#/definitions/AppointmentResponse'
+        default:
+          description: Error
+          schema:
+            $ref: '#/definitions/ErrorResponseForm'
+      x-swagger-router-controller: Schedule
+  /resend-verification-code:
+    post:
+      tags:
+      - User
+      description: Resending of signup verification code
+      operationId: ResendVerification
+      parameters:
+      - in: body
+        name: verificationForm
+        description: Verification assigned to applicant
+        required: true
+        schema:
+          $ref: '#/definitions/ResendVerificationForm'
+      responses:
+        "200":
+          description: Success
+          schema:
+            $ref: '#/definitions/ResendVerificationCodeResponse'
+        default:
+          description: Error
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      x-swagger-router-controller: Verification
+  /search-result:
+    get:
+      tags:
+      - User
+      - New
+      description: Search list/specific Merchant or Service.
+      operationId: SearchResult
+      parameters:
+      - name: search
+        in: query
+        description: Key word used to search merchant and services.
+        required: false
+        type: string
+      responses:
+        "200":
+          description: Success
+          schema:
+            type: object
+            properties:
+              data:
+                type: object
+                properties:
+                  merchant:
+                    type: array
+                    items:
+                      $ref: '#/definitions/SearchResultMerchantResponse'
+                  service:
+                    type: array
+                    items:
+                      $ref: '#/definitions/SearchResultServicesResponse'
+              message:
+                type: string
+              success:
+                type: boolean
+                default: true
+        default:
+          description: Error
+          schema:
+            $ref: '#/definitions/ErrorResponseForm'
+      x-swagger-router-controller: Verification
+  /services:
+    get:
+      tags:
+      - Service Locations
+      description: "Get list of services. Ref: https://trello.com/c/wLAwvZch/8-service-list-page"
+      operationId: GetServices
+      parameters: []
+      responses:
+        "200":
+          description: Success
+          schema:
+            type: object
+            properties:
+              data:
+                type: array
+                items:
+                  $ref: '#/definitions/ServiceResponse'
+              success:
+                type: boolean
+                default: true
+              message:
+                type: string
+                description: Successful message
+                default: Success!
+        default:
+          description: Error
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      x-swagger-router-controller: Services
+    post:
+      tags:
+      - Service Locations
+      description: "Save service. Ref: https://trello.com/c/wLAwvZch/8-service-list-page"
+      operationId: SaveService
+      parameters:
+      - in: body
+        name: ServicePayload
+        description: Contains details of service.
+        required: true
+        schema:
+          $ref: '#/definitions/ServicePayload'
+      responses:
+        "200":
+          description: Success
+          schema:
+            $ref: '#/definitions/SuccessResponse'
+        default:
+          description: Error
+          schema:
+            $ref: '#/definitions/ErrorResponseForm'
+      x-swagger-router-controller: Services
+  /services/{serviceId}/locations:
+    get:
+      tags:
+      - User
+      - Service Locations
+      description: Get the list of service locations based on the service parameter provided
+      operationId: retrieveServiceLocationWithService
+      parameters:
+      - name: serviceId
+        in: path
+        description: Filter service
+        required: true
+        type: integer
+      - name: locationId
+        in: query
+        description: Filter service location
+        required: false
+        type: integer
+      responses:
+        "200":
+          description: Success
+          schema:
+            $ref: '#/definitions/Success'
+        default:
+          description: Error
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      x-swagger-router-controller: Services
+  /services/{serviceId}/reminder:
+    get:
+      tags:
+      - User
+      description: Get the current reminder set by merchant for a specified service.
+      operationId: GetServiceReminder
+      parameters:
+      - name: serviceId
+        in: path
+        description: Filter service
+        required: true
+        type: integer
+      responses:
+        "200":
+          description: Success
+          schema:
+            type: object
+            properties:
+              data:
+                $ref: '#/definitions/ServiceReminderResponse'
+              message:
+                type: string
+              success:
+                type: boolean
+                default: true
+        default:
+          description: Error
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      x-swagger-router-controller: Services
+  /service-provider/business-name:
+    post:
+      tags:
+      - Service Locations
+      description: Save service provider business name.
+      operationId: saveServiceProviderBusinessName
+      parameters:
+      - in: body
+        name: ServiceProviderBusinessNamePayload
+        description: Service Provider Business Name Payload
+        required: true
+        schema:
+          $ref: '#/definitions/ServiceProviderBusinessNamePayload'
+      responses:
+        "200":
+          description: Success
+          schema:
+            $ref: '#/definitions/ServiceProviderBusinessNameResponse'
+        default:
+          description: Error
+          schema:
+            $ref: '#/definitions/ErrorResponseForm'
+      x-swagger-router-controller: ServiceProviders
+  /service-provider/remarks:
+    post:
+      tags:
+      - Service Locations
+      description: Save service provider remarks.
+      operationId: saveServiceProviderRemarks
+      parameters:
+      - in: body
+        name: ServiceProviderRemarksPayload
+        description: Service Provider Remnarks Payload
+        required: true
+        schema:
+          $ref: '#/definitions/ServiceProviderRemarksPayload'
+      responses:
+        "200":
+          description: Success
+          schema:
+            $ref: '#/definitions/ServiceProviderRemarksResponse'
+        default:
+          description: Error
+          schema:
+            $ref: '#/definitions/ErrorResponseForm'
+      x-swagger-router-controller: ServiceProviders
+  /service-provider/settings:
+    get:
+      tags:
+      - Service Locations
+      description: "Get Service Provider Schedule Setting. Ref: https://trello.com/c/lcuYCJLf/17-servicelocation-setup"
+      operationId: getServiceProviderSetting
+      parameters: []
+      responses:
+        "200":
+          description: Success
+          schema:
+            $ref: '#/definitions/ServiceProviderSettingResponse'
+        default:
+          description: Error
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      x-swagger-router-controller: ServiceProviders
+    put:
+      tags:
+      - Service Locations
+      description: "Save Service Provider Schedule Setting. Ref: https://trello.com/c/lcuYCJLf/17-servicelocation-setup"
+      operationId: saveServiceProviderSetting
+      consumes:
+      - multipart/form-data
+      produces:
+      - application/json
+      parameters:
+      - in: body
+        name: ServiceProviderSettingForm
+        description: Service Provider Setting Payload
+        required: true
+        schema:
+          $ref: '#/definitions/ServiceProviderSettingForm'
+      responses:
+        "200":
+          description: Success
+          schema:
+            $ref: '#/definitions/ServiceProviderSettingResponse'
+        default:
+          description: Error
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      x-swagger-router-controller: ServiceProviders
+  /service-provider/types:
+    get:
+      tags:
+      - Service Locations
+      description: Get type of service provider
+      operationId: getServiceProviderType
+      parameters: []
+      responses:
+        "200":
+          description: Success
+          schema:
+            type: object
+            properties:
+              data:
+                type: array
+                description: List of Service Provider Type
+                items:
+                  $ref: '#/definitions/ServiceProviderTypeResponse'
+        default:
+          description: Error
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      x-swagger-router-controller: ServiceProviders
+  /time-slot/{serviceProviderId}/list:
+    get:
+      tags:
+      - User
+      description: "List of available time slots based on the chosen appointment date. Ref: https://trello.com/c/J8qc3GmF/9-booking-form"
+      operationId: retrieveTimeSlots
+      parameters:
+      - name: serviceProviderId
+        in: path
+        description: Service Provider Id
+        required: true
+        type: string
+        default: "1234"
+      - name: date
+        in: query
+        description: "Date chosen by the applicant in the booking list page. Format: mm/dd/yyyy"
+        required: true
+        type: string
+        default: 07/18/2020
+      responses:
+        "200":
+          description: Success
+          schema:
+            $ref: '#/definitions/ServiceProviderTimeSlots'
+        default:
+          description: Error
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      x-swagger-router-controller: ServiceDates
+  /time-slot/{timeSlotId}:
+    get:
+      tags:
+      - User
+      description: "Retrieve the details of the timeslot including the break down of slots based on the grace period and averate transaction time. Ref: https://trello.com/c/J8qc3GmF/9-booking-form"
+      operationId: retrieveTimeSlotDetails
+      parameters:
+      - name: timeSlotId
+        in: path
+        description: Timeslot Id
+        required: true
+        type: string
+        default: "1234"
+      responses:
+        "200":
+          description: Success
+          schema:
+            $ref: '#/definitions/ServiceProviderTimeSlotDetailsView'
+        default:
+          description: Error
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      x-swagger-router-controller: ServiceDates
+  /service-provider-signup:
+    post:
+      tags:
+      - Service Locations
+      description: Service location signup. Once submitted they will receive the email that their application is submitted and in review.
+      operationId: ClientSignup
+      consumes:
+      - multipart/form-data
+      produces:
+      - application/json
+      parameters:
+      - in: body
+        name: ClientSignupPayload
+        description: Information to be registered
+        required: true
+        schema:
+          $ref: '#/definitions/ServiceProviderSignupForm'
+      responses:
+        "200":
+          description: Success
+          schema:
+            $ref: '#/definitions/SignUpResponse'
+        default:
+          description: Error
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      x-swagger-router-controller: ClientSignup
+  /strike/validate-score:
+    get:
+      tags:
+      - User
+      description: Check if user is lockout from booking.
+      operationId: validateStrikeScore
+      parameters: []
+      responses:
+        "200":
+          description: Success
+          schema:
+            $ref: '#/definitions/StrikeCheckerResponseForm'
+        default:
+          description: Error
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      x-swagger-router-controller: Strike
+  /service-provider/stats:
+    get:
+      tags:
+      - Service Locations
+      description: "Information sections for Service Provider homepage. Ref: https://trello.com/c/rM6H68zw/16-servicelocation-home"
+      operationId: retreiveStats
+      parameters:
+      - name: date
+        in: query
+        description: Date to be used for stats retrieval
+        required: true
+        type: string
+        default: 07/18/2020
+      responses:
+        "200":
+          description: Success
+          schema:
+            $ref: '#/definitions/ServiceProviderStatsView'
+        default:
+          description: Error
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      x-swagger-router-controller: ServiceDates
+  /subscription-plan/list:
+    get:
+      tags:
+      - Service Locations
+      description: Get all active subscription plans.
+      operationId: getSubscriptionPlans
+      parameters: []
+      responses:
+        "200":
+          description: Success
+          schema:
+            $ref: '#/definitions/SubscriptionPlanList'
+        default:
+          description: Error
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      x-swagger-router-controller: SubscriptionPlan
+  /subscription-plan/{id}:
+    get:
+      tags:
+      - Service Locations
+      description: Get specific active subscription plan.
+      operationId: getPlanById
+      parameters:
+      - name: id
+        in: path
+        description: Unique identifier of a subscription plan.
+        required: true
+        type: string
+      responses:
+        "200":
+          description: Success
+          schema:
+            type: object
+            properties:
+              data:
+                $ref: '#/definitions/SubscriptionPlanDetails'
+              success:
+                type: boolean
+                default: true
+              message:
+                type: string
+        default:
+          description: Error
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      x-swagger-router-controller: SubscriptionPlan
+  /terms-and-conditions/latest:
+    get:
+      tags:
+      - User
+      description: Get the latest terms and conditions.
+      operationId: retrieveLatestTermsAndConditions
+      parameters: []
+      responses:
+        "200":
+          description: Success
+          schema:
+            $ref: '#/definitions/TermsAndConditionView'
+        default:
+          description: Error
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      x-swagger-router-controller: TermsAndConditions
+  /user-signup:
+    post:
+      tags:
+      - User
+      description: User signup
+      operationId: UserSignup
+      parameters:
+      - in: body
+        name: SignUpForm
+        description: Information to be registered
+        required: true
+        schema:
+          $ref: '#/definitions/SignUpForm'
+      responses:
+        "200":
+          description: Success
+          schema:
+            $ref: '#/definitions/SignUpResponse'
+        default:
+          description: Error
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      x-swagger-router-controller: UserSignup
+  /user:
+    get:
+      tags:
+      - User
+      description: Get user information based on the token provided
+      operationId: retrieve
+      produces:
+      - application/json
+      parameters: []
+      responses:
+        "200":
+          description: Success
+          schema:
+            $ref: '#/definitions/UserInfoResponse'
+        default:
+          description: Error
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      x-swagger-router-controller: User
+    put:
+      tags:
+      - User
+      description: To update user information once after registration and also for the settings based on the token provided
+      operationId: update
+      consumes:
+      - multipart/form-data
+      produces:
+      - application/json
+      parameters:
+      - in: body
+        name: User
+        description: Payload of user information
+        required: true
+        schema:
+          $ref: '#/definitions/UserInfoPayload'
+      responses:
+        "200":
+          description: Success
+          schema:
+            $ref: '#/definitions/UserInfoResponse'
+        default:
+          description: Error
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      x-swagger-router-controller: User
+  /user/contact-verification:
+    post:
+      tags:
+      - User
+      - Service Locations
+      description: For sending of verification of email address or mobile number
+      operationId: ContactInfoVerification
+      parameters:
+      - in: body
+        name: SendVerificationForm
+        description: Email address or mobile number to be verified
+        required: true
+        schema:
+          $ref: '#/definitions/SendVerificationForm'
+      responses:
+        "200":
+          description: Success
+          schema:
+            $ref: '#/definitions/SendVerificationResponse'
+        default:
+          description: Error
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      x-swagger-router-controller: User
+  /user/temporary-password:
+    post:
+      tags:
+      - User
+      - Service Locations
+      description: Send temporary password to user email
+      operationId: TemporaryPassword
+      parameters:
+      - in: body
+        name: TemporaryPasswordForm
+        description: Payload of user information
+        required: true
+        schema:
+          $ref: '#/definitions/TemporaryPasswordForm'
+      responses:
+        "200":
+          description: Success
+          schema:
+            $ref: '#/definitions/TemporaryPasswordResponse'
+        default:
+          description: Error
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      x-swagger-router-controller: User
+  /user/update-password:
+    put:
+      tags:
+      - User
+      - Service Locations
+      description: For updating user password
+      operationId: UpdatePassword
+      parameters:
+      - in: body
+        name: UserUpdatePasswordForm
+        description: Payload of user information
+        required: true
+        schema:
+          $ref: '#/definitions/UserUpdatePasswordForm'
+      responses:
+        "200":
+          description: Success
+          schema:
+            $ref: '#/definitions/VerificationResponse'
+        default:
+          description: Error
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      x-swagger-router-controller: User
+  /user/verify-contact:
+    post:
+      tags:
+      - User
+      - Service Locations
+      description: For verification of email address or mobile number
+      operationId: VerifyContactInfo
+      parameters:
+      - in: body
+        name: VerifyEmailMobileForm
+        description: Email address or mobile number to be verified and verification code (OTP)
+        required: true
+        schema:
+          $ref: '#/definitions/VerifyEmailMobileForm'
+      responses:
+        "200":
+          description: Success
+          schema:
+            $ref: '#/definitions/VerifyEmailMobileResponse'
+        default:
+          description: Error
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      x-swagger-router-controller: User
+  /verification:
+    post:
+      tags:
+      - User
+      description: User verification after signup
+      operationId: Verification
+      parameters:
+      - in: body
+        name: verificationForm
+        description: Verification assigned to applicant
+        required: true
+        schema:
+          $ref: '#/definitions/VerificationForm'
+      responses:
+        "200":
+          description: Success
+          schema:
+            $ref: '#/definitions/VerificationResponse'
+        default:
+          description: Error
+          schema:
+            $ref: '#/definitions/LoginErrorResponse'
+      x-swagger-router-controller: Verification
+  /sms/{appointmentId}/notify:
+    post:
+      tags:
+      - SMS
+      description: For sending notification regarding the specified appointment Id
+      operationId: NotifyAppointment
+      parameters:
+      - name: appointmentId
+        in: path
+        description: Appointment Id for notification
+        required: true
+        type: string
+      responses:
+        "200":
+          description: Success
+          schema:
+            $ref: '#/definitions/Success'
+        default:
+          description: Error
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      x-swagger-router-controller: SMS
+definitions:
+  ActivePlanResponse:
+    type: object
+    properties:
+      data:
+        type: object
+        properties:
+          plan_id:
+            type: string
+            default: "00001"
+          plan_name:
+            type: string
+            default: EasyQueue Monthly
+          plan_period:
+            type: string
+            default: Monthly
+          remaining_transaction:
+            type: integer
+          expiry_period:
+            type: integer
+          next_invoice_date:
+            type: string
+            default: 2021-02-01
+          next_invoice_amount:
+            type: number
+          status:
+            type: string
+            default: Active
+      success:
+        type: boolean
+        default: true
+      message:
+        type: string
+  AgencyDetailsView:
+    type: object
+    properties:
+      id:
+        type: integer
+        description: Primary Id
+      image_url:
+        type: string
+        description: This image url will be used to retrieve the file from the back-end server.
+        default: "1"
+      name:
+        type: string
+        description: Name of the agency
+        default: LTO
+  AgencyListDetailsView:
+    type: object
+    properties:
+      id:
+        type: integer
+        description: Primary Id
+      name:
+        type: string
+        description: Name of the agency
+        default: LTO
+  AgencyPage:
+    type: object
+    properties:
+      data:
+        type: array
+        description: List of agencies
+        items:
+          $ref: '#/definitions/AgencyDetailsView'
+      page:
+        type: object
+        properties:
+          page_number:
+            type: integer
+            description: Current page where the record is at.
+          page_size:
+            type: integer
+            description: Total number of records per page.
+          total_elements:
+            type: integer
+            description: Total numbers of records.
+          total_pages:
+            type: integer
+            description: Total numbers pages.
+  AppointmentDetailsView:
+    type: object
+    properties:
+      transaction_number:
+        type: string
+        format: string
+        description: Unique number assigned per successful appointment
+        default: "12345"
+      appointment_id:
+        type: string
+        format: string
+        description: hidden information that only our application can pull
+        default: "12345"
+      appointment_date:
+        type: string
+        format: string
+        description: Appointment date
+        default: 07/18/2020
+      start_time:
+        type: string
+        format: string
+        description: Appointment Start time
+        default: 08:00 AM
+      end_time:
+        type: string
+        format: string
+        description: Appointment End time
+        default: 09:00 AM
+      completion_time:
+        type: string
+        format: string
+        description: Completion time
+        default: 09:30 AM
+      service_provider_name:
+        type: string
+        format: string
+        description: Registered name of the service provider.
+        default: Olivander's Emission Testing Center
+      service_provider_location:
+        type: string
+        format: string
+        description: Registered address of the service provider.
+        default: Diagon Alley
+      service_provider_contact:
+        type: string
+        format: string
+        description: Contact number of the service provider
+        default: 625-9278
+      payment_option:
+        type: string
+        description: Payment option chosen by the applicant.
+        default: COL
+      paid:
+        type: boolean
+        description: Indicator wheather the appointment fee has been paid.
+        default: false
+      appointment_status:
+        type: string
+        format: string
+        description: Appointment Status
+        default: Completed
+  AppointmentPayload:
+    type: object
+    properties:
+      appointment_date:
+        type: string
+        format: date
+        description: Appointment date
+      service_provider_id:
+        type: integer
+        description: Service Provider Id
+      time_slot_id:
+        type: string
+        format: string
+        description: Id of the chosen time slot
+        default: "123"
+      payment_mode:
+        type: string
+        format: string
+        description: Payment mode
+        default: COL
+        enum:
+        - Online
+        - COL
+        - Qpoints
+      order_reference:
+        type: string
+        description: Unique order reference sent to PesoPay
+        default: 123456-0001-0001-123456
+      service_id:
+        type: integer
+        description: Service Id
+      client_remarks:
+        type: string
+        description: Clients remarks to service provider
+        default: string
+      total_amount_due:
+        type: number
+        description: Amount that needs to be paid indicated on the Payment Method.
+      consumer_service_fee:
+        type: number
+        description: Flat-rate amount a consumer must pay per transaction.
+      merchant_fee:
+        type: number
+        description: Merchant's cut of the transaction.
+      taxable_amount:
+        type: number
+        description: Payment Amount multiplied by a certain percentage.
+      transaction_fee:
+        type: number
+        description: Taxable Amount plus misc.
+      service_charge:
+        type: number
+        description: Amount charge to consumer.
+      vatable_amount:
+        type: number
+        description: 12% of Taxable Amount.
+      withholding_amount:
+        type: number
+        description: 5% or 8% of Taxable Amount.
+      pricing_type_id:
+        type: integer
+        description: Unique Id for Pricing Type.
+      tier_pricing_id:
+        type: string
+        description: Unique Id for Tier Pricing.
+        default: "00000001"
+      pay_points_only:
+        type: boolean
+        description: Require consumer to use points as payment.
+        default: false
+      will_consumer_pay:
+        type: boolean
+        description: Require consumer to pay.
+        default: true
+      is_self_booking:
+        type: boolean
+        description: Flagging if booking for Self or for Someone Else
+        default: true
+      attendees_firstname:
+        type: string
+        description: Firstname of attendees.
+        default: Jane
+      attendees_lastname:
+        type: string
+        description: Lastname of attendees.
+        default: Doe
+  AppointmentUpdateForm:
+    type: object
+    properties:
+      id:
+        type: integer
+        format: int32
+  AppointmentPage:
+    type: object
+    properties:
+      data:
+        type: array
+        description: List of booked appointments
+        items:
+          $ref: '#/definitions/AppointmentResponse'
+      is_daterange_locked:
+        type: boolean
+        description: Check if the whole date range is locked.
+        default: false
+      has_pending_booking:
+        type: boolean
+        description: Check if there is an existing pending bookings.
+        default: false
+      message:
+        type: string
+      success:
+        type: boolean
+        default: true
+      page:
+        type: object
+        properties:
+          cursor_id:
+            type: integer
+            description: Id of the last element.
+          page_size:
+            type: integer
+            description: Total number of records per page.
+          total_elements:
+            type: integer
+            description: Total numbers of records.
+          total_pages:
+            type: integer
+            description: Total numbers pages.
+  AppointmentResponse:
+    type: object
+    properties:
+      appointment_id:
+        type: integer
+        description: Appointment Id
+      appointment_code:
+        type: string
+        format: string
+        description: Unique Appointment Code. Used for generating barcode
+        default: 12345-12345-12345
+      appointment_date:
+        type: string
+        format: date
+        description: Appointment date
+      appointment_status:
+        type: string
+        format: string
+        description: Appointment status
+        default: COMPLETED
+        enum:
+        - IN_PROGRESS
+        - CANCELLED
+        - COMPLETED
+      appointment_completion:
+        type: string
+        format: date
+        description: Appointment completion date
+      appointment_cancellation:
+        type: string
+        format: date
+        description: Appointment cancellation date
+      appointment_cancellation_reason:
+        type: string
+        format: string
+        description: Reason for cancellation
+        default: Busy
+      payment_id:
+        type: integer
+        description: Payment Id
+      payment_date:
+        type: string
+        format: date
+        description: Payment date
+      payment_status:
+        type: string
+        format: string
+        description: Payment status
+        default: COMPLETED
+        enum:
+        - IN_PROGRESS
+        - CANCELLED
+        - COMPLETED
+      payment_option:
+        type: string
+        description: Payment option selected by the user when booking for this schedule
+        default: COL
+        enum:
+        - DRAGON_PAY
+        - COL
+      amount:
+        type: number
+        description: Amoun paid/to be paid by the applicant
+      start_time:
+        type: string
+        format: string
+        description: Appointment Start time
+        default: 08:00 AM
+      end_time:
+        type: string
+        format: string
+        description: Appointment End time
+        default: 09:00 AM
+      service_provider_id:
+        type: integer
+        format: integer
+        description: Id of service location
+      service_provider_name:
+        type: string
+        format: string
+        description: Registered name of the service provider.
+        default: Olivander's Emission Testing Center
+      service_provider_location:
+        type: string
+        format: string
+        description: Registered address of the service provider.
+        default: Diagon Alley
+      service_provider_contact:
+        type: string
+        format: string
+        description: Registered contact number of the service provider.
+        default: (63) 9878899
+      service:
+        type: object
+        description: Service selected by the consumer
+        properties:
+          id:
+            type: string
+            description: Service ID
+            default: "1"
+          name:
+            type: string
+            description: Service name
+            default: Emission Testing
+      customer_name:
+        type: string
+        format: string
+        description: Registered name of the customer.
+        default: Olivander's Emission Testing Center
+      customer_location:
+        type: string
+        format: string
+        description: Registered address of the service customer.
+        default: Diagon Alley
+      customer_contact:
+        type: string
+        format: string
+        description: Registered contact number of the customer.
+        default: (63) 9878899
+      has_feedback:
+        type: boolean
+        description: Indicates if the specified booking has feedback.
+        default: false
+      client_remarks:
+        type: string
+        description: Client's remarks to Service Provider
+        default: string
+      merchant_remarks:
+        type: string
+        description: Merchant's remarks to client specially on cancellation.
+        default: Sample remarks
+      reminders:
+        type: string
+        description: Merchant's reminder to clients for requirements or notice.
+        default: Sample reminder
+      service_location_remarks:
+        type: string
+        description: Service Provider's remarks to Clients
+        default: string
+      is_date_locked:
+        type: boolean
+        description: Flagging if this booking date is locked by the service provider.
+        default: false
+      is_self_booking:
+        type: boolean
+        description: Flagging if booking for Self or for Someone Else
+        default: true
+      attendees_firstname:
+        type: string
+        description: Firstname of attendees.
+        default: Jane
+      attendees_lastname:
+        type: string
+        description: Lastname of attendees.
+        default: Doe
+  AppointmentCancellationForm:
+    type: object
+    properties:
+      reason:
+        type: string
+        description: Reason for cancellation
+        default: Schedule conflict
+  AppointmentCancellationResponse:
+    type: object
+    properties:
+      data:
+        type: object
+        properties:
+          service_provider_id:
+            type: string
+            description: Service Location Id
+          appointment_status:
+            type: string
+            description: Appointment status
+          booking_enabled:
+            type: boolean
+            description: Flagging if client is prohibited from booking
+            default: false
+      message:
+        type: string
+      success:
+        type: boolean
+        default: true
+  AppointmentCancellAllPayload:
+    type: object
+    properties:
+      start_date:
+        type: string
+        default: 2021-04-01
+      end_date:
+        type: string
+        default: 2021-04-30
+      cancell_bookings:
+        type: boolean
+        default: true
+  AppointmentCancellAllResponse:
+    type: object
+    properties:
+      data:
+        type: object
+        properties:
+          cancelled_dates:
+            type: string
+            default: 2021-04-01 to 2021-04-30
+          are_bookings_cancelled:
+            type: boolean
+            default: true
+      message:
+        type: string
+      success:
+        type: boolean
+        default: true
+  BusinessHoursResponse:
+    type: object
+    properties:
+      day:
+        type: string
+        description: Day of the week.
+        default: Monday
+      business_hour:
+        type: string
+        description: Hours of operation.
+        default: 8:00 AM - 5:00 PM
+  BillingInfoPayload:
+    type: object
+    properties:
+      fullname:
+        type: string
+        default: Juan Dela Cruz
+      contact_number:
+        type: string
+        default: "09123456789"
+      email_address:
+        type: string
+        default: juandelacruze@gmail.com
+      address:
+        type: string
+        default: "123 Manila, Philippines"
+  BillingInfoResponse:
+    type: object
+    properties:
+      billing_info_id:
+        type: string
+        default: "00001"
+      service_location_id:
+        type: string
+        default: "00001"
+      fullname:
+        type: string
+        default: Juan Dela Cruz
+      contact_number:
+        type: string
+        default: "09123456789"
+      email_address:
+        type: string
+        default: juandelacruze@gmail.com
+      address:
+        type: string
+        default: "123 Manila, Philippines"
+  BusinessSizeResponse:
+    type: object
+    properties:
+      id:
+        type: integer
+        description: Unique Identifier for Business Size record.
+      name:
+        type: string
+        description: Name of Business Size.
+        default: Small (1-4 branches)
+  CancelSubscriptionResponse:
+    type: object
+    properties:
+      merchant_subscription_id:
+        type: string
+        default: "000001"
+      subscription_date:
+        type: string
+        default: "Jan 1, 2021"
+      plan_name:
+        type: string
+        default: EasyQueue Monthly
+      plan_period:
+        type: string
+        default: Monthly
+      plan_charge:
+        type: number
+      transaction_limit:
+        type: integer
+      total_transaction:
+        type: integer
+      unused_transaction:
+        type: integer
+      plan_duration:
+        type: string
+        default: "Jan 1 - 31, 2021"
+      cancellation_date:
+        type: string
+        default: "Jan 15, 2021 12:00 PM"
+      cancellation_reason:
+        type: string
+        default: Subscribe to new plan.
+  CategoryResponse:
+    type: object
+    properties:
+      id:
+        type: integer
+        description: Unique identifier of Subcategory (Agency).
+      name:
+        type: string
+        description: Name of Subcategory (Agency).
+        default: BIR
+      subcategories:
+        type: array
+        items:
+          $ref: '#/definitions/SubCategoryResponse'
+  ErrorResponse:
+    type: object
+    properties:
+      global_errors:
+        type: array
+        description: Containing global error messages
+        uniqueItems: true
+        items:
+          type: string
+      field_errors:
+        type: object
+        additionalProperties:
+          type: array
+          items:
+            type: string
+  ErrorResponseForm:
+    type: object
+    properties:
+      data:
+        type: object
+        properties: {}
+      success:
+        type: boolean
+        default: false
+      message:
+        type: string
+        default: An error has occured. Please try again.
+  FeedbackForm:
+    type: object
+    properties:
+      service_location_id:
+        type: integer
+        description: Service Location Id.
+      appointment_id:
+        type: integer
+        description: Current appointment id of booking receipt.
+      score:
+        type: integer
+        description: Score given to a service location with 1 being the lowest to 5 being the highest.
+      comment:
+        type: string
+        description: Brief comment for service location.
+  GovernmentIdPayload:
+    type: object
+    properties:
+      government_type_id:
+        type: integer
+        format: string
+        description: Appicant's Government Issues Id type
+      id_number:
+        type: string
+        format: string
+        description: Applicant's Government Issued Id number
+        default: Passport0001
+      image:
+        type: string
+        format: string
+        description: This requires authorization header to be accessed.
+        default: (Response.Form.File)
+  GovernmentIdResponse:
+    type: object
+    properties:
+      government_type_id:
+        type: string
+        format: string
+        description: Appicant's Government Issues Id type
+        default: Passport
+      id_number:
+        type: string
+        format: string
+        description: Applicant's Government Issued Id number
+        default: Passport0001
+      file_name:
+        type: string
+        format: string
+        description: Filename of government Id
+        default: Passport0001.jpeg
+  Identification:
+    type: object
+    properties:
+      name:
+        type: string
+        format: string
+        description: Display name
+        default: SSS
+      value:
+        type: string
+        description: Value
+        default: 987-654-423
+  IdentificationDetails:
+    type: object
+    properties:
+      id:
+        type: number
+        description: Unique identifier for Identification.
+      name:
+        type: string
+        format: string
+        description: Display name
+        default: SSS
+  IndustryTypeResponse:
+    type: object
+    properties:
+      industry_type_id:
+        type: integer
+        description: Unique id for industry type
+      industry_type_name:
+        type: string
+        description: Unique name for industry name
+        default: string
+  InvoiceDetailsResponse:
+    type: object
+    properties:
+      data:
+        type: object
+        properties:
+          invoice_id:
+            type: string
+            description: Unique identifier for invoice.
+            default: "00001"
+          invoice_no:
+            type: string
+            description: Unique reference for invoice.
+            default: "00001"
+          due_date:
+            type: string
+            description: Due date of Invoice
+            default: "Mar 30, 2021"
+          details:
+            type: string
+            description: Details of invoice.
+            default: Sample remarks
+          amount:
+            type: number
+            description: Subtotal amount
+          vat:
+            type: number
+            description: Vatable amount
+          total_amount:
+            type: number
+            description: Sum of Subtotal Amount and the Vatable Amount.
+      message:
+        type: string
+      success:
+        type: boolean
+        default: true
+  InvoiceListResponse:
+    type: object
+    properties:
+      invoice_id:
+        type: string
+        description: Unique identifier for invoice.
+        default: "00001"
+      invoice_number:
+        type: string
+        description: System generated invoice number
+        default: 20210101-001
+      invoice_date:
+        type: string
+        description: DateTime of invoice record creation.
+        default: 2020-02-01 00:00:00
+      due_date:
+        type: string
+        description: End date of subscription.
+        default: 2020-02-01 00:00:00
+      due_amount:
+        type: number
+        description: Total amount the merchant must pay.
+      status:
+        type: string
+        description: Status of Invoice
+        default: Settled
+  LockDateResponse:
+    type: object
+    properties:
+      id:
+        type: string
+        description: Unique Id for lockdate
+        default: "0"
+      lock_date_start:
+        type: string
+        description: Start lock date
+        default: 2000-01-01 00:00 AM/PM
+      lock_date_end:
+        type: string
+        description: End lock date
+        default: 2000-01-30 00:00 AM/PM
+      cancelled_bookings:
+        type: boolean
+        description: Flagging if service provider cancelled all bookings within this date.
+        default: false
+  LockDatePayload:
+    type: object
+    properties:
+      start_date:
+        type: string
+        format: MM/dd/yyyy
+        description: Date to be locked.
+        default: 04/01/2021
+      end_date:
+        type: string
+        format: MM/dd/yyyy
+        description: Date to be locked.
+        default: 04/30/2000
+      cancel_bookings:
+        type: boolean
+        description: Flagging if all booking will be cancelled
+        default: false
+  LockDateListResponse:
+    type: object
+    properties:
+      lock_dates:
+        type: array
+        items:
+          type: string
+          default: 2021-04-01
+  LoginForm:
+    type: object
+    required:
+    - password
+    properties:
+      email_or_mobile:
+        type: string
+        description: Email address or mobile number used by the applicant during account sign-up process.
+        default: test@easypass.com
+      password:
+        type: string
+        description: The password chose by the applicant.
+        default: Password@123
+  LoginErrorResponse:
+    type: object
+    properties:
+      error:
+        type: string
+        description: Error name
+        default: INVALID_GRANT
+      error_description:
+        type: string
+        description: Error Description
+        default: Bad Credentials
+  MerchantBusinessNameResponse:
+    type: object
+    properties:
+      id:
+        type: string
+        description: Merchant Id.
+      business_name:
+        type: string
+        description: Registered business name.
+  MerchantCancelRemarksPayload:
+    type: object
+    properties:
+      appointment_id:
+        type: string
+        description: Unqiue identifier for booking.
+        default: "1"
+      cancellation_remarks:
+        type: string
+        description: Brief description of merchant's reason for cancellation.
+  MerchantCancelRemarksResponse:
+    type: object
+    properties:
+      appointment_id:
+        type: string
+        description: Unqiue identifier for booking.
+        default: "1"
+      booking_date_time:
+        type: string
+        description: Date of appointment
+        default: 2021-01-10
+      service_name:
+        type: string
+        description: Name of service booked for.
+        default: Capital Gains Tax Registration.
+      cancellation_remarks:
+        type: string
+        description: Brief description of merchant's reason for cancellation.
+  MerchantDashboardResponse:
+    type: object
+    properties:
+      id:
+        type: string
+        description: Merchant Id.
+      merchant_slug:
+        type: string
+        description: Unique slug undentifier for static pages.
+        default: che_autocheck_emission_testing_center_v_luna
+      merchant_type:
+        type: string
+        description: Type of merchant either Public or Private.
+        default: Private
+      business_name:
+        type: string
+        description: Registered business name.
+        default: Che Autocheck Emission Testing Center - V. Luna
+      business_address:
+        type: string
+        description: Registered business address.
+      rating:
+        type: number
+        description: Computed average rating.
+      distance:
+        type: number
+        description: Distance in km from point of origin.
+      images:
+        $ref: '#/definitions/MerchantImageResponse'
+      agency:
+        $ref: '#/definitions/SubCategoryResponse'
+      services:
+        type: array
+        items:
+          $ref: '#/definitions/ServiceResponse'
+  MerchantImageResponse:
+    type: object
+    properties:
+      cover:
+        type: string
+        description: CDN link for merchant cover photo.
+      thumbnail:
+        type: string
+        description: CDN link for merchant thumbnail photo.
+  MerchantListDashboardResponse:
+    type: object
+    properties:
+      data:
+        type: array
+        items:
+          $ref: '#/definitions/MerchantDashboardResponse'
+      messages:
+        type: string
+      success:
+        type: boolean
+        default: true
+      page:
+        type: object
+        properties:
+          cursor_id:
+            type: integer
+            description: Id pointer for the starting id of the next page.
+          page_number:
+            type: integer
+            description: Current page where the record is at.
+          page_size:
+            type: integer
+            description: Total number of records per page.
+  MerchantLogoPayload:
+    type: object
+    properties:
+      merchant_id:
+        type: integer
+        description: Servicing Provider Id
+      image_url:
+        type: string
+        description: Uploaded image
+        default: Response.Form.File
+  MerchantLogoResponse:
+    type: object
+    properties:
+      merchant_id:
+        type: integer
+        description: Servicing Provider Id
+      image_url:
+        type: string
+        description: CDN Link for Merchant Logo.
+        default: www.cdmlink.myimage
+  MerchantProfilePayload:
+    type: object
+    properties:
+      id:
+        type: integer
+        description: Servicing Provider Id
+      announcement:
+        type: string
+        description: Merchant remarks to client
+      description:
+        type: string
+        description: Description of the company.
+      cover_image:
+        type: string
+        format: binary
+        description: File type payload
+      representative_firstname:
+        type: string
+        description: Firstname of representative.
+        default: Juan
+      representative_lastname:
+        type: string
+        description: Lastname of representative.
+        default: Dela Cruz
+      representative_email:
+        type: string
+        description: User email.
+        default: jdc@gmail.com
+      representative_contact:
+        type: string
+        description: User mobile no.
+        default: "09123456789"
+      merchant_type_id:
+        type: integer
+        description: Public or Private SL Type.
+      business_name:
+        type: string
+        description: Name of Merchant's Service Location
+        default: Healthica Clinic
+      business_name_1:
+        type: string
+        description: Name of Merchant's Service Location
+        default: Healthica Clinic
+      category_id:
+        type: integer
+        description: Unique identifier of category.
+      agency_id:
+        type: integer
+        description: Unique identifier of agency.
+      government_ids:
+        type: array
+        items:
+          $ref: '#/definitions/GovernmentIdPayload'
+      street:
+        type: string
+        description: Business Location Blk Lot House No Street
+        default: 34 Diagon Alley
+      barangay:
+        type: string
+        description: Business Location Barangay
+        default: Some Barangay
+      city_municipality:
+        type: string
+        description: Business Location City/Municipality
+        default: Some Municipality
+      province:
+        type: string
+        description: Business Location Province
+        default: Some Province
+      zipcode:
+        type: integer
+        description: Business Location Zipcode
+      lat:
+        type: string
+        description: Business Location Latitude
+        default: "15684.0568"
+      lng:
+        type: string
+        description: Business Location Longitude
+        default: "868138.0568"
+      landmark_addr:
+        type: string
+        format: string
+        description: Nearest landmark address to the Service Location
+        default: 34 Diagon Alley
+      use_landmark:
+        type: boolean
+        description: Set true if Landmark Address will be used to display SL Address
+        default: false
+  MerchantProfileResponse:
+    type: object
+    properties:
+      id:
+        type: integer
+        description: Servicing Provider Id
+      announcement:
+        type: string
+        description: Merchant remarks to client
+      description:
+        type: string
+        description: Description of the company.
+      cover_image:
+        type: string
+        description: This requires authorization header to be accessed.
+      representative_firstname:
+        type: string
+        description: Firstname of representative.
+        default: Juan
+      representative_lastname:
+        type: string
+        description: Lastname of representative.
+        default: Dela Cruz
+      representative_email:
+        type: string
+        description: User email.
+        default: jdc@gmail.com
+      representative_contact:
+        type: string
+        description: User mobile no.
+        default: "09123456789"
+      merchant_type_id:
+        type: integer
+        description: Public or Private SL Type.
+      category_id:
+        type: integer
+        description: Unique identifier of category.
+      agency_id:
+        type: integer
+        description: Unique identifier of agency.
+      government_ids:
+        type: array
+        items:
+          $ref: '#/definitions/GovernmentIdResponse'
+      cover_image_url:
+        type: string
+        description: CDN link for cover image.
+        default: https://www.mycdn.com
+      cover_image_name:
+        type: string
+        description: Name of cover image.
+        default: cover_image.jpeg
+      street:
+        type: string
+        description: Business Location Blk Lot House No Street
+        default: 34 Diagon Alley
+      barangay:
+        type: string
+        description: Business Location Barangay
+        default: Some Barangay
+      city_municipality:
+        type: string
+        description: Business Location City/Municipality
+        default: Some Municipality
+      province:
+        type: string
+        description: Business Location Province
+        default: Some Province
+      zipcode:
+        type: integer
+        description: Business Location Zipcode
+      lat:
+        type: number
+        description: Business Location Latitude
+      lng:
+        type: number
+        description: Business Location Longitude
+      landmark_addr:
+        type: string
+        format: string
+        description: Nearest landmark address to the Service Location
+        default: 34 Diagon Alley
+      use_landmark:
+        type: boolean
+        description: Set true if Landmark Address will be used to display SL Address
+        default: false
+  MerchantResponse:
+    type: object
+    properties:
+      id:
+        type: integer
+        description: Service Provider Id.
+      business_name:
+        type: string
+        description: Registered business name.
+      business_address:
+        type: string
+        description: Registered business address.
+      phone:
+        type: string
+        description: contact number.
+      email:
+        type: string
+        description: Registered email.
+      rating:
+        type: number
+        description: Computed average rating.
+      distance:
+        type: number
+        description: Distance in km from point of origin.
+      images:
+        $ref: '#/definitions/MerchantImageResponse'
+      announcement:
+        type: string
+        description: Merchant announcement.
+      services:
+        type: array
+        items:
+          $ref: '#/definitions/ServiceResponse'
+  MerchantRatingResponse:
+    type: object
+    properties:
+      name:
+        type: string
+        description: Consumer name.
+        default: Consumer 1
+      rating:
+        type: integer
+        description: Score given to merchant.
+      comment:
+        type: string
+        description: Feedback to merchant's service.
+        default: Outstanding service.
+      date:
+        type: string
+        description: Date of review.
+        default: "Jan 01, 2021"
+  MerchantSchedulePayload:
+    type: object
+    properties:
+      id:
+        type: integer
+        description: Servicing Provider Id
+      allowable_slots:
+        type: number
+        description: Maximum number of slots allowed for the service provider
+      average_service_time:
+        type: number
+        description: Average time to service an applicant (in minutes)
+      grace_period:
+        type: number
+        description: Time allowance (in minutes)
+      is_same_schedule:
+        type: boolean
+        description: Implement same schdule to all service days.
+        default: false
+      service_time:
+        type: array
+        items:
+          type: object
+          properties:
+            service_day:
+              type: number
+            opening_time:
+              type: string
+              format: HH:mm
+              description: Servicing start time. Format must be 24-hour format
+              default: 08:00
+            closing_time:
+              type: string
+              format: HH:mm
+              description: Servicing end time. Format must be 24-hour format
+              default: 17:00
+            time_slots:
+              type: array
+              items:
+                type: string
+                description: Available time for the chosen appointment date
+                default: 8:00 AM
+      service_ids:
+        type: array
+        description: List of service Ids
+        items:
+          type: integer
+      remarks:
+        type: string
+        description: Service Location remarks to client
+        default: string
+  MerchantSetupPayload:
+    type: object
+    properties:
+      id:
+        type: integer
+        format: string
+        description: Servicing Provider Id
+      merchant_schedule:
+        $ref: '#/definitions/MerchantSchedulePayload'
+      merchant_profile:
+        $ref: '#/definitions/MerchantProfilePayload'
+  MerchantSetupResponse:
+    type: object
+    properties:
+      id:
+        type: integer
+        format: string
+        description: Servicing Provider Id
+      merchant_schedule:
+        $ref: '#/definitions/MerchantSchedulePayload'
+      merchant_profile:
+        $ref: '#/definitions/MerchantProfileResponse'
+  MerchantSubscriptionPayload:
+    type: object
+    properties:
+      order_reference:
+        type: string
+        description: Unique order reference.
+        default: "0000001"
+      plan_id:
+        type: string
+        description: Unique identifier for Subscription Plan.
+        default: "00001"
+      plan_period:
+        type: string
+        default: Monthly
+      transaction_limit:
+        type: integer
+        description: Max transaction limit.
+      plan_charge:
+        type: number
+        description: Subscription Plan price/charge.
+      vat:
+        type: number
+        description: Amount due multiplied by 12%.
+  MerchantSubscriptionResponse:
+    type: object
+    properties:
+      data:
+        type: object
+        properties:
+          merchant_subscription_id:
+            type: string
+            description: Unique identifier for the record of purchased subscription.
+            default: "0000001"
+          service_provider:
+            type: string
+            description: Name of Service Provider.
+            default: LTO
+          subscription_plan:
+            type: string
+            description: Name of Subscription.
+            default: EasyQueue Monthly
+          plan_period:
+            type: string
+            description: Duration of the subscription.
+            default: Monthly
+          transaction_limit:
+            type: integer
+            description: Max transaction limit.
+          plan_charge:
+            type: number
+            description: Subscription Plan price/charge.
+          vat:
+            type: number
+            description: Subscription Plan vat.
+          payment_method:
+            type: string
+            default: Visa
+          payment_amount:
+            type: number
+            description: Amount paid using peso pay.
+          invoice_number:
+            type: string
+            description: System generated invoice number
+            default: 20210101-001
+          plan_duration:
+            type: string
+            default: 2021-01-01 00:00:00 to 2021-01-31 23:59:59
+          plan_created:
+            type: string
+            default: 2021-01-01 00:00:00
+          plan_autorenew_status:
+            type: string
+            default: "On"
+      message:
+        type: string
+      success:
+        type: boolean
+        default: true
+  OTPResponse:
+    type: object
+    properties:
+      data:
+        type: object
+        properties:
+          verification_code:
+            type: string
+            description: OTP for verification of transactions
+            default: "0123456"
+      message:
+        type: string
+      success:
+        type: boolean
+        default: true
+  OrderRequestForm:
+    type: object
+    properties:
+      order_reference:
+        type: string
+        description: Unique key for order reference of PesoPay
+  OrderResponseForm:
+    type: object
+    properties:
+      data:
+        type: object
+        properties:
+          id:
+            type: integer
+            description: Unique id key for Order Reference
+          order_reference:
+            type: string
+            description: Unique key for order reference of PesoPay
+          created_date_time:
+            type: string
+            format: date
+            description: Date of creation of record.
+      message:
+        type: string
+      success:
+        type: boolean
+        default: true
+  PaymentOptionResponse:
+    type: object
+    properties:
+      data:
+        type: object
+        properties:
+          merchant_id:
+            type: number
+            description: Unique identifier for merchant.
+          consumer_service_fee:
+            type: number
+            description: Flat-rate amount a consumer must pay per transaction.
+          merchant_fee:
+            type: number
+            description: Merchant's cut of the transaction.
+          pricing_type_id:
+            type: integer
+            description: Unique Id for Pricing Type.
+          tier_pricing_id:
+            type: string
+            description: Unique Id for Tier Pricing.
+            default: "00000001"
+          pay_points_only:
+            type: boolean
+            description: Require consumer to use points as payment.
+            default: true
+          will_consumer_pay:
+            type: boolean
+            description: Require consumer to pay.
+            default: true
+          payment_options:
+            type: array
+            items:
+              type: object
+              properties:
+                payment_option_id:
+                  type: integer
+                  description: Unique id for payment option.
+                payment_mode:
+                  type: string
+                  description: Mode of Payment
+                  enum:
+                  - Visa
+                  - Master
+                  - GCash
+                  - COL
+                  - QPoints
+                amount:
+                  type: number
+                  description: Total amount to be paid by the consumer
+                taxable_amount:
+                  type: number
+                  description: Payment Amount multiplied by a certain percentage.
+                transaction_fee:
+                  type: number
+                  description: Taxable Amount plus misc.
+                service_charge:
+                  type: number
+                  description: Amount charge to consumer.
+                vatable_amount:
+                  type: number
+                  description: 12% of Taxable Amount.
+                withholding_amount:
+                  type: number
+                  description: 5% or 8% of Taxable Amount.
+      message:
+        type: string
+      success:
+        type: boolean
+        default: true
+  PaymentStatusRequestForm:
+    type: object
+    properties:
+      merchant_id:
+        type: integer
+        description: Provided merchant ID
+      login_id:
+        type: string
+        description: The loginId of using merchant API
+        default: userpeso
+      password:
+        type: string
+        description: The password of using merchant API
+        default: userpassword
+      order_reference:
+        type: string
+        description: Merchant Reference Number
+        default: 1603174075-0006-0001-10212020
+      payment_reference:
+        type: string
+        description: Payment Reference Number
+        default: ref-0002
+  PaymentStatusUpdateRequestForm:
+    type: object
+    properties:
+      success_payment:
+        type: boolean
+        description: Tagging if payment is successfull
+        default: true
+      appointment_id:
+        type: integer
+        description: Unique id for booking
+  PaymentStatusResultForm:
+    type: object
+    properties:
+      order_status:
+        type: string
+        description: The new order status after succes sfully request
+        default: "1234"
+      payment_reference:
+        type: string
+        description: PesoPay transaction reference
+        default: ref-0002
+      success_code:
+        type: string
+        description: "Only return for order status Accepted, Authorized, Rejected"
+        default: Succeeded
+      error_message:
+        type: string
+        description: Error Message
+  PointsPage:
+    type: object
+    properties:
+      data:
+        type: array
+        items:
+          type: object
+          properties:
+            mode:
+              type: string
+              description: Indicate whether the point is earned or deducted
+              default: PLUS
+              enum:
+              - PLUS
+              - MINUS
+            point:
+              type: number
+              description: Points earned or deducted
+            appointment_id:
+              type: string
+              description: Id of the appointment
+              default: "123"
+      page:
+        type: object
+        properties:
+          page_number:
+            type: integer
+            description: Current page where the record is at.
+          page_size:
+            type: integer
+            description: Total number of records per page.
+          total_elements:
+            type: integer
+            description: Total numbers of records.
+          total_pages:
+            type: integer
+            description: Total numbers pages.
+  PointsPayload:
+    type: object
+    properties:
+      amount:
+        type: number
+        format: double
+        description: Points to be earned
+        default: 500.0
+      order_reference:
+        type: string
+        description: Unique order reference sent to peso pay
+        default: 1603174075-0006-0001-10212020
+  PointsTotalDetailsView:
+    type: object
+    properties:
+      total_points:
+        type: number
+        description: Total Points credited to the user
+  PointsTransactionResponse:
+    type: object
+    properties:
+      transaction_id:
+        type: integer
+        description: Unique identifier
+      payment_reference:
+        type: string
+        description: Unique reference return by PesoPay.
+        default: "1212918911"
+      points:
+        type: number
+        description: Converted amount to points
+      transaction_datetime:
+        type: string
+        description: DateTime of transaction
+        default: 2020-10-26 10:48 AM
+      remarks:
+        type: string
+        description: Transaction remarks
+        default: string
+      total_points:
+        type: number
+        description: Total remaining points
+  PointsHistoryResponse:
+    type: object
+    properties:
+      transaction_id:
+        type: string
+        description: Unique identifier
+        default: "00001"
+      order_reference:
+        type: string
+        description: Unique order reference sent to peso pay
+        default: 1603174075-0006-0001-10212020
+      payment_reference:
+        type: string
+        description: Unique reference return by PesoPay.
+        default: "1212918911"
+      transaction_type:
+        type: string
+        description: Either Payment or Purchase
+        default: Payment
+      service_provider:
+        type: string
+        description: Name of Service Provider
+        default: Service Provider 1
+      address:
+        type: string
+        description: Address of Service Location if the transaction type is Payment
+        default: "28 Brgy. tibay, Cainta Rizal"
+      booking_datetime:
+        type: string
+        description: Timeslot of Booking if the transaction type is Payment
+        default: "Nov. 01, 2020 12 PM"
+      transaction_status:
+        type: string
+        description: "Status of Transaction if success, failed or in-progress based on booking status"
+        default: Success
+      points:
+        type: number
+        description: Converted amount to points
+      transaction_datetime:
+        type: string
+        description: DateTime of transaction
+        default: 2020-10-26 10:48 AM
+      remarks:
+        type: string
+        description: Transaction remarks
+        default: string
+  Receipt:
+    type: object
+    properties:
+      code:
+        type: string
+        format: string
+        description: QR code use to pull information
+        default: 1234-1234-555-3344
+      booking_id:
+        type: string
+        format: string
+        description: hidden information that only our application can pull
+        default: "12345"
+      booking_date:
+        type: string
+        format: date-time
+        description: Booking date
+      name:
+        type: string
+        format: string
+        description: Location of the service
+        default: Cainta emission testing
+      is_paid:
+        type: boolean
+        description: Booking is paid or not.
+        default: false
+      transaction_status:
+        type: string
+        description: Whether complete/cancel
+        enum:
+        - COMPLETE
+        - CANCEL
+      transaction_date:
+        format: date-time
+        description: Date of transaction
+      transaction_id:
+        type: string
+        format: string
+        description: If transaction is complete this will be available
+        default: "1234"
+      amount:
+        type: number
+        description: Amount
+  RemoveLockDateRequestForm:
+    type: object
+    properties:
+      lock_dates:
+        type: array
+        description: Valid lock dates.
+        items:
+          type: string
+          default: 2021-04-01
+  RemoveLockDateResponse:
+    type: object
+    properties:
+      lock_dates:
+        type: array
+        items:
+          type: string
+          default: 2021-04-01
+  ResendVerificationCodeResponse:
+    type: object
+    properties:
+      data:
+        type: object
+        properties:
+          code:
+            type: string
+            description: Verification code assigned to applicant.
+      message:
+        type: string
+        description: Success message
+        default: Successfully registered
+  ResendVerificationForm:
+    type: object
+    properties:
+      registration_id:
+        type: string
+        description: Unique Id assigned to applicant upon registration.
+        default: test@easypass.com
+  SearchResultMerchantResponse:
+    type: object
+    properties:
+      id:
+        type: integer
+        description: Unique identifier of merchant.
+      name:
+        type: string
+        description: Name of merchant.
+        default: Healthica Clinic
+      address:
+        type: string
+        description: Merchant address.
+        default: Luzon
+      rating:
+        type: number
+        description: Average merchant rating.
+      images:
+        $ref: '#/definitions/MerchantImageResponse'
+      distance:
+        type: string
+        description: Distance of merchant from the consumer in kilometer
+        default: 1km
+  SearchResultServicesResponse:
+    type: object
+    properties:
+      merchant:
+        $ref: '#/definitions/SearchResultMerchantResponse'
+      service_name:
+        type: string
+        description: Name of service.
+      price:
+        type: string
+        description: Booking Price
+        default: Php 0.00
+      available_slots:
+        type: integer
+        description: Number of slots available in a given latest date (nearest available booking date).
+      latest_date:
+        type: string
+        description: Nearest available booking date
+        default: "Jan 01, 2021"
+  SendVerificationForm:
+    type: object
+    properties:
+      email_or_mobile:
+        type: string
+        description: Email or Mobile Number to be verified
+  SendVerificationResponse:
+    type: object
+    properties:
+      email_or_mobile:
+        type: string
+        description: Email or Mobile Number to be verified
+  ServiceDate:
+    type: object
+    properties:
+      id:
+        type: string
+        format: Time slot Id
+        description: Assigned Id to time slot
+      time:
+        type: string
+        format: hh:mm a
+        description: Available time for the chosen appointment date
+        default: 8:00 AM
+  ServiceDateGroup:
+    type: object
+    properties:
+      group:
+        type: string
+        description: Group of time slots per time.
+        default: 8:00 AM
+      time_slots:
+        type: array
+        items:
+          $ref: '#/definitions/ServiceDate'
+  ServiceDetailsView:
+    type: object
+    properties:
+      id:
+        type: string
+        description: Primary Id
+        default: "1"
+      image_url:
+        type: string
+        description: This will be used to retrieve the image for the service
+        default: "1"
+      name:
+        type: string
+        description: Name of the service
+        default: Emission testing
+  ServicePage:
+    type: object
+    properties:
+      data:
+        type: array
+        description: List of services
+        items:
+          $ref: '#/definitions/ServiceDetailsView'
+      page:
+        type: object
+        properties:
+          page_number:
+            type: integer
+            description: Current page where the record is at.
+          page_size:
+            type: integer
+            description: Total number of records per page.
+          total_elements:
+            type: integer
+            description: Total numbers of records.
+          total_pages:
+            type: integer
+            description: Total numbers pages.
+  ServicePayload:
+    type: object
+    properties:
+      id:
+        type: integer
+        description: Unique identifier of service.
+      name:
+        type: string
+        description: Name of the service.
+        default: Capital Gains Tax Registration
+      description:
+        type: string
+        description: Service description.
+      price:
+        type: number
+        description: Service price.
+      reminder:
+        type: string
+        description: Additional instruction/remarks provided by merchant.
+      checklist:
+        type: array
+        description: List of requirements for the consumer.
+        items:
+          type: string
+          description: Requirement for the consumer.
+  ServiceProviderBusinessNamePayload:
+    type: object
+    properties:
+      business_name:
+        type: string
+        description: Business name set by the service provider.
+        default: ""
+  ServiceProviderBusinessNameResponse:
+    type: object
+    properties:
+      data:
+        type: object
+        properties:
+          business_name:
+            type: string
+            description: Business name set by the service provider.
+            default: ""
+      message:
+        type: string
+      success:
+        type: boolean
+        default: true
+  ServiceProviderDetailsView:
+    type: object
+    properties:
+      id:
+        type: string
+        format: string
+        description: Service Location Id
+        default: "123"
+      first_name:
+        type: string
+        format: string
+        description: Applicant's First Name
+        default: Garrick
+      middle_name:
+        type: string
+        format: string
+        description: Applicant's Middle Name
+        default: Mezzo
+      last_name:
+        type: string
+        format: string
+        description: Applicant's Last Name
+        default: Olivander
+      business_name:
+        type: string
+        format: string
+        description: Business Name
+        default: Olivander's Emisssion Testing
+      business_industry:
+        type: string
+        format: string
+        description: Business Industry
+        default: Olivander's Emisssion Testing
+      government_id_type:
+        type: string
+        format: string
+        description: Appicant's Government Issues Id type
+        default: Passport
+      govvernment_id_number:
+        type: string
+        format: string
+        description: Applicant's Government Issued Id number
+        default: Passport
+      govvernment_photo_url:
+        type: string
+        format: string
+        description: This requires authorization header to be accessed.
+        default: "123"
+      agency:
+        type: object
+        properties:
+          id:
+            type: string
+            format: string
+            description: Agency Id
+            default: "123"
+          name:
+            type: string
+            format: string
+            description: Agency Name
+            default: LTO
+      service_ids:
+        type: array
+        description: List of service ids
+        items:
+          type: object
+          properties:
+            id:
+              type: integer
+              description: Service Id
+            name:
+              type: string
+              format: string
+              description: Service Name
+              default: Emission Testing
+      mobile_number:
+        type: string
+        format: string
+        description: Applicant's Mobile Number
+        default: +639177640099
+      email_address:
+        type: string
+        format: string
+        description: Applicant's Email Address
+        default: olivander@yopmail.com
+      street:
+        type: string
+        format: string
+        description: Business Location Street
+        default: 34 Diagon Alley
+      barangay:
+        type: string
+        format: string
+        description: Business Location Barangay
+        default: Some Barangay
+      municipality:
+        type: string
+        format: string
+        description: Business Location Municipality
+        default: Some Municipality
+      town_city:
+        type: string
+        format: string
+        description: Business Location City
+        default: London
+      zipcode:
+        type: string
+        format: string
+        description: Business Location Zipcode
+        default: London
+  ServiceProviderSettingResponse:
+    type: object
+    properties:
+      business_name:
+        type: string
+        description: Name of the business provided by the merchant.
+        default: Olivander's Wand Shop
+      company_address:
+        type: string
+        description: Address of the company based on SEC Registration.
+        default: 34 Diagon Alley
+      company_number:
+        type: string
+        description: Contact number of the company.
+        default: "09123456789"
+      identifications:
+        type: array
+        description: Array of identifications information
+        readOnly: true
+        items:
+          $ref: '#/definitions/Identification'
+      allowable_slots:
+        type: number
+        description: Maximum number of slots allowed for the service provider
+      average_service_time:
+        type: number
+        description: Average time to service an applicant (in minutes)
+      grace_period:
+        type: number
+        description: Time allowance (in minutes)
+      service_time:
+        type: array
+        items:
+          type: object
+          properties:
+            service_day:
+              type: number
+            opening_time:
+              type: string
+              format: HH:mm
+              description: Servicing start time. Format must be 24-hour format
+              default: 08:00
+            closing_time:
+              type: string
+              format: HH:mm
+              description: Servicing end time. Format must be 24-hour format
+              default: 17:00
+            time_slots:
+              type: array
+              items:
+                type: string
+                description: Available time for the chosen appointment date
+                default: 8:00 AM
+      service_ids:
+        type: array
+        description: List of service Ids
+        items:
+          type: integer
+      service_location_remarks:
+        type: string
+        description: Service Location remarks to client
+        default: string
+  ServiceProviderSettingForm:
+    type: object
+    properties:
+      id:
+        type: string
+        format: string
+        description: Servicing Provider Id
+      allowable_slots:
+        type: number
+        description: Maximum number of slots allowed for the service provider
+      average_service_time:
+        type: number
+        description: Average time to service an applicant (in minutes)
+      grace_period:
+        type: number
+        description: Time allowance (in minutes)
+      service_time:
+        type: array
+        items:
+          type: object
+          properties:
+            service_day:
+              type: number
+            opening_time:
+              type: string
+              format: HH:mm
+              description: Servicing start time. Format must be 24-hour format
+              default: 08:00
+            closing_time:
+              type: string
+              format: HH:mm
+              description: Servicing end time. Format must be 24-hour format
+              default: 17:00
+            time_slots:
+              type: array
+              items:
+                type: string
+                description: Available time for the chosen appointment date
+                default: 8:00 AM
+      service_ids:
+        type: array
+        description: List of service Ids
+        items:
+          type: integer
+      remarks:
+        type: string
+        description: Service Location remarks to client
+        default: string
+  ServiceProviderRemarksPayload:
+    type: object
+    properties:
+      remarks:
+        type: string
+        description: Remarks set by the service provider.
+        default: ""
+  ServiceProviderRemarksResponse:
+    type: object
+    properties:
+      data:
+        type: object
+        properties:
+          remarks:
+            type: string
+            description: Remarks set by the service provider.
+            default: ""
+      message:
+        type: string
+      success:
+        type: boolean
+        default: true
+  ServiceProviderStatsView:
+    type: object
+    properties:
+      data:
+        type: object
+        properties:
+          paid:
+            type: number
+            description: Number of applicant's for the day who are already paid
+          col:
+            type: number
+            description: Number of applicant's for the day who opted to COL
+          open:
+            type: number
+            description: "Number of remaining open slots for the day. Computation: AllowableSlots - (Total Complete Booking + Total Pending Booking)"
+          complete:
+            type: number
+            description: Total No. of complete booking for the day.
+          pending:
+            type: number
+            description: Total No. of pending booking for the day.
+          cancelled:
+            type: number
+            description: Total No. of cancelled booking for the day.
+          total_appointment:
+            type: number
+            description: Total No. of booking for the day.
+  ServiceProviderTimeSlots:
+    type: object
+    properties:
+      data:
+        type: object
+        properties:
+          date:
+            type: string
+            description: Chosen appointment date of the applicant
+          service_provider_name:
+            type: string
+            description: Service Provider Name
+          service_provider_location:
+            type: string
+            description: Service Provider Location
+          time_slots:
+            type: array
+            items:
+              $ref: '#/definitions/ServiceDateGroup'
+      message:
+        type: string
+      success:
+        type: boolean
+        default: true
+  ServiceProviderTimeSlotDetailsView:
+    type: object
+    properties:
+      data:
+        type: object
+        properties:
+          id:
+            type: string
+            description: Time Slot Id
+            default: "123"
+          time:
+            type: string
+            default: 11:00 AM
+      message:
+        type: string
+      success:
+        type: boolean
+        default: true
+  ServiceProviderTypeResponse:
+    type: object
+    properties:
+      type_id:
+        type: integer
+        description: Unqiue id for service provider type.
+      type_name:
+        type: string
+        format: string
+        description: Type of Service Provider
+        default: Public
+        enum:
+        - Public
+        - Private
+  ServiceReminderResponse:
+    type: object
+    properties:
+      service_id:
+        type: integer
+      reminder_id:
+        type: string
+      description:
+        type: string
+  ServiceResponse:
+    type: object
+    properties:
+      id:
+        type: integer
+        description: Unique identifier of a service.
+      name:
+        type: string
+        description: Service name.
+        default: Business Permit Registration
+      price:
+        type: number
+        description: Service price.
+      available_slot:
+        type: integer
+        description: Available slots of a service base on the nearest available booking date.
+      latest_date:
+        type: string
+        description: Nearest available booking date.
+        default: "Jan 01, 2021"
+  SignUpForm:
+    type: object
+    required:
+    - email_or_mobile
+    - password
+    properties:
+      email_or_mobile:
+        type: string
+        description: Email address or Mobile Number the user wants to use
+        default: harry.potter@hogwarts.edu
+      password:
+        type: string
+        description: Password the user wants to use.
+        default: Password@123
+      terms_and_agreement_version:
+        type: string
+        description: Terms and Agremment version
+      is_guest_account:
+        type: boolean
+        description: Indicator whether the account signup is for guest user or not
+  SignUpResponse:
+    type: object
+    properties:
+      data:
+        type: object
+        properties:
+          registration_id:
+            type: string
+            description: Unique id assigned to applicant upon registration.
+      message:
+        type: string
+        description: Success message
+        default: Successfully registered
+  ServiceProviderSignupForm:
+    type: object
+    properties:
+      representative_firstname:
+        type: string
+        format: string
+        description: Applicant's First Name
+        default: Garrick
+      representative_lastname:
+        type: string
+        format: string
+        description: Applicant's Last Name
+        default: Olivander
+      sex:
+        type: string
+        format: string
+        description: "M - Male, F - Female"
+      business_name:
+        type: string
+        format: string
+        description: Business Name
+        default: Olivander's Emisssion Testing
+      provider_type_id:
+        type: integer
+        description: Unique id for service provider type. (Public or Private).
+      industry_type_id:
+        type: integer
+        description: Industry Type Id
+      business_size_id:
+        type: integer
+        description: Business Size Id
+      government_id_type:
+        type: integer
+        format: integer
+        description: Applicant's Government Issued Id type (Refer from library)
+      government_id_number:
+        type: string
+        format: string
+        description: Applicant's Government Issued Id number
+        default: Passport
+      government_id_photo:
+        type: string
+        format: string
+        description: Applicant's Government Issued Id scanned file. Maximum upload size will be 1MB. Upload file endpoint must be called first and the resulting id will the value of this field.
+        default: "123"
+      agency_id:
+        type: integer
+        format: integer
+        description: Agency Id (Refer from library)
+      service_ids:
+        type: array
+        description: List of service Ids
+        items:
+          type: integer
+      mobile_number:
+        type: string
+        format: string
+        description: Applicant's Mobile Number
+        default: +639177640099
+      email_address:
+        type: string
+        format: string
+        description: Applicant's Email Address
+        default: olivander@yopmail.com
+      street:
+        type: string
+        format: string
+        description: Business Location Blk Lot House No Street
+        default: 34 Diagon Alley
+      barangay:
+        type: string
+        format: string
+        description: Business Location Barangay
+        default: Some Barangay
+      city_municipality:
+        type: string
+        format: string
+        description: Business Location City/Municipality
+        default: Some Municipality
+      province:
+        type: string
+        format: string
+        description: Business Location Province
+        default: Some Province
+      zipcode:
+        type: string
+        format: string
+        description: Business Location Zipcode
+        default: "0000"
+      lat:
+        type: string
+        format: string
+        description: Business Location Latitude
+        default: "14.00009"
+      lon:
+        type: string
+        format: string
+        description: Business Location Longitude
+        default: "16.99999"
+      landmark_addr:
+        type: string
+        format: string
+        description: Nearest landmark address to the Service Location
+        default: 34 Diagon Alley
+      use_landmark:
+        type: boolean
+        description: Set true if Landmark Address will be used to display SL Address
+        default: false
+  StrikeCheckerResponseForm:
+    type: object
+    properties:
+      booking_lockout:
+        type: boolean
+        description: Flagging if user is lockout from booking.
+        default: false
+  SubCategoryResponse:
+    type: object
+    properties:
+      id:
+        type: integer
+        description: Unique identifier of Subcategory (Agency).
+      name:
+        type: string
+        description: Name of Subcategory (Agency).
+        default: BIR
+  SubscriptionPlanList:
+    type: object
+    properties:
+      data:
+        type: array
+        items:
+          $ref: '#/definitions/SubscriptionPlanDetails'
+      success:
+        type: boolean
+        default: true
+      message:
+        type: string
+  SubscriptionPlanDetails:
+    type: object
+    properties:
+      account_id:
+        type: string
+        description: Billing Account Id
+        default: "202102001"
+      account_name:
+        type: string
+        description: Billing Fullname
+        default: Juan Dela Cruz
+      account_address:
+        type: string
+        description: Billing address
+        default: 123 Manila Philippines
+      plan_id:
+        type: string
+        default: "00001"
+      plan_name:
+        type: string
+        default: EasyQueue Monthly
+      plan_period:
+        type: string
+        default: Monthly
+      schedule_type:
+        type: string
+        description: "Type of schedule - Day, Month or Year"
+        default: Month
+      no_of_schedule:
+        type: integer
+      monthly_charge:
+        type: number
+      period_covered:
+        type: string
+        default: "Feb 04 - Mar 04, 2021"
+      transaction_limit:
+        type: integer
+      plan_charge:
+        type: number
+      vat:
+        type: number
+        description: 12% of Plan Charge
+      total:
+        type: number
+        description: Sum of Plan Charge and Vat
+  SubscriptionPlanPeriodDetails:
+    type: object
+    properties:
+      plan_period_id:
+        type: string
+        default: "00001"
+      plan_period_name:
+        type: string
+        default: Monthly
+  Success:
+    type: object
+    properties:
+      data:
+        type: object
+        properties: {}
+      message:
+        type: string
+        description: Successful message
+        default: Success!
+  SuccessResponse:
+    type: object
+    properties:
+      data:
+        type: object
+        properties: {}
+      success:
+        type: boolean
+        default: true
+      message:
+        type: string
+        description: Successful message
+        default: Success!
+  TemporaryPasswordForm:
+    type: object
+    properties:
+      email_or_mobile:
+        type: string
+        description: User email used for login.
+  TemporaryPasswordResponse:
+    type: object
+    properties:
+      user_id:
+        type: string
+        description: Unique autogenerated user id
+        default: 2d7b8ac1-57b5-4ae1-9de8-94e000834df7
+  TermsAndConditionView:
+    type: object
+    properties:
+      data:
+        type: object
+        properties:
+          version:
+            type: string
+            description: Current version of terms and conditions
+          value:
+            type: string
+            description: Terms and Conditions full text
+      message:
+        type: string
+        description: Response message
+  UserInfoResponse:
+    type: object
+    properties:
+      data:
+        type: object
+        properties:
+          id:
+            type: string
+            format: string
+            description: Primary Id
+            readOnly: true
+            default: "1"
+          mobile_number:
+            type: string
+            description: Mobile Number
+            readOnly: true
+          email:
+            type: string
+            format: string
+            description: Email address
+            readOnly: true
+            default: testdev@gmail.com
+          first_name:
+            type: string
+            format: string
+            description: First name of the applicant based on the birth certificate
+            readOnly: true
+            default: Harry James
+          last_name:
+            type: string
+            format: string
+            description: Last name of the applicant based on the birth certificate
+            readOnly: true
+            default: Potter
+          is_company_use:
+            type: boolean
+            description: Set to true if for company use.
+            default: true
+          profile_picture:
+            type: string
+            description: File id. This will be used to retrieve the exact file from the server
+            readOnly: true
+            default: IMG_1
+          street:
+            type: string
+            format: string
+            description: Business Location Blk Lot House No Street
+            default: 34 Diagon Alley
+          barangay:
+            type: string
+            format: string
+            description: Business Location Barangay
+            default: Some Barangay
+          city_municipality:
+            type: string
+            format: string
+            description: Business Location City/Municipality
+            default: Some Municipality
+          province:
+            type: string
+            format: string
+            description: Business Location Province
+            default: Some Province
+          zipcode:
+            type: string
+            format: string
+            description: Business Location Zipcode
+            default: "0000"
+      message:
+        type: string
+  UserInfoPayload:
+    type: object
+    properties:
+      id:
+        type: string
+        format: string
+        description: Primary Id
+        default: "1"
+      mobile_number:
+        type: string
+        description: Mobile Number
+      email:
+        type: string
+        format: string
+        description: Email address
+        default: testdev@gmail.com
+      first_name:
+        type: string
+        format: string
+        description: First name of the applicant based on the birth certificate
+        default: Harry James
+      last_name:
+        type: string
+        format: string
+        description: Last name of the applicant based on the birth certificate
+        default: Potter
+      is_company_use:
+        type: boolean
+        description: Set to true if for company use.
+      profile_picture:
+        type: string
+        description: File id. This will be used to retrieve the exact file from the server
+        default: IMG_1
+      street:
+        type: string
+        format: string
+        description: Business Location Blk Lot House No Street
+        default: 34 Diagon Alley
+      barangay:
+        type: string
+        format: string
+        description: Business Location Barangay
+        default: Some Barangay
+      city_municipality:
+        type: string
+        format: string
+        description: Business Location City/Municipality
+        default: Some Municipality
+      province:
+        type: string
+        format: string
+        description: Business Location Province
+        default: Some Province
+      zipcode:
+        type: string
+        format: string
+        description: Business Location Zipcode
+        default: "0000"
+  UserUpdatePasswordForm:
+    type: object
+    properties:
+      old_password:
+        type: string
+        description: Old password
+      new_password:
+        type: string
+        description: New password
+  VerificationForm:
+    type: object
+    required:
+    - code
+    properties:
+      registration_id:
+        type: string
+        description: Unique id assigned to applicant upon signup
+      code:
+        type: string
+        description: Code they received from email or mobile number
+        default: "1234"
+  VerificationResponse:
+    type: object
+    properties:
+      access_token:
+        type: string
+        description: "JWT access token user need to pass to use the API. Access token has the following payload field: authorities - contains the roles and privileges assigned to authenticated user"
+        default: JWT abcdefg1234
+      expires_in:
+        type: number
+        description: Timestamp when the access_token will epxire
+      role:
+        type: string
+        description: Return the role of the user
+        default: CONSUMER
+        enum:
+        - CONSUMER
+        - PROVIDER
+      is_first_login:
+        type: boolean
+        description: "Return true if the user logs in first time, else false"
+        default: true
+  VerifyEmailMobileForm:
+    type: object
+    properties:
+      email_or_mobile:
+        type: string
+        description: Email or Mobile Number to be verified
+      verification_code:
+        type: string
+        description: OTP for verification
+  VerifyEmailMobileResponse:
+    type: object
+    properties:
+      email_or_mobile:
+        type: string
+        description: Verified Email or Mobile Number
+      verification_code:
+        type: string
+        description: OTP used for verification
